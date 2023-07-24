@@ -14,7 +14,7 @@ import (
 var slugRegularExpression = regexp.MustCompile("[^a-z0-9]+")
 
 // NatsPublish publishes event to NATS
-func (c *Client) NatsPublish(falcopayload types.FalcoPayload) {
+func (c *Client) NatsPublish(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Nats.Add(Total, 1)
 
 	nc, err := nats.Connect(c.EndpointURL.String())
@@ -26,15 +26,14 @@ func (c *Client) NatsPublish(falcopayload types.FalcoPayload) {
 	defer nc.Flush()
 	defer nc.Close()
 
-	r := strings.Trim(slugRegularExpression.ReplaceAllString(strings.ToLower(falcopayload.Rule), "_"), "_")
-	j, err := json.Marshal(falcopayload)
+	j, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err.Error())
 		return
 	}
 
-	err = nc.Publish("falco."+strings.ToLower(falcopayload.Priority.String())+"."+r, j)
+	err = nc.Publish("kubearmor."+strings.ToLower(kubearmorpayload.EventType), j)
 	if err != nil {
 		c.setNatsErrorMetrics()
 		log.Printf("[ERROR] : NATS - %v\n", err)

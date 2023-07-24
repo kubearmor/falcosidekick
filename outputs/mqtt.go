@@ -17,7 +17,7 @@ func NewMQTTClient(config *types.Configuration, stats *types.Statistics, promSta
 
 	options := mqtt.NewClientOptions()
 	options.AddBroker(config.MQTT.Broker)
-	options.SetClientID("falcosidekick-" + uuid.NewString()[:6])
+	options.SetClientID("kubearmor-" + uuid.NewString()[:6])
 	if config.MQTT.User != "" && config.MQTT.Password != "" {
 		options.Username = config.MQTT.User
 		options.Password = config.MQTT.Password
@@ -46,7 +46,7 @@ func NewMQTTClient(config *types.Configuration, stats *types.Statistics, promSta
 }
 
 // MQTTPublish .
-func (c *Client) MQTTPublish(falcopayload types.FalcoPayload) {
+func (c *Client) MQTTPublish(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.MQTT.Add(Total, 1)
 
 	t := c.MQTTClient.Connect()
@@ -59,7 +59,7 @@ func (c *Client) MQTTPublish(falcopayload types.FalcoPayload) {
 		return
 	}
 	defer c.MQTTClient.Disconnect(100)
-	if err := c.MQTTClient.Publish(c.Config.MQTT.Topic, byte(c.Config.MQTT.QOS), c.Config.MQTT.Retained, falcopayload.String()).Error(); err != nil {
+	if err := c.MQTTClient.Publish(c.Config.MQTT.Topic, byte(c.Config.MQTT.QOS), c.Config.MQTT.Retained, kubearmorpayload.String()).Error(); err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:mqtt", "status:error"})
 		c.Stats.MQTT.Add(Error, 1)
 		c.PromStats.Outputs.With(map[string]string{"destination": "mqtt", "status": Error}).Inc()

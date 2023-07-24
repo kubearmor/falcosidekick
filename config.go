@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
-	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -14,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/spf13/viper"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/falcosecurity/falcosidekick/types"
 )
@@ -34,17 +30,8 @@ func getConfig() *types.Configuration {
 		GCP:             types.GcpOutputConfig{PubSub: types.GcpPubSub{CustomAttributes: make(map[string]string)}},
 	}
 
-	configFile := kingpin.Flag("config-file", "config file").Short('c').ExistingFile()
-	version := kingpin.Flag("version", "falcosidekick version").Short('v').Bool()
-	kingpin.Parse()
-
-	if *version {
-		v := GetVersionInfo()
-		fmt.Println(v.String())
-		os.Exit(0)
-	}
-
 	v := viper.New()
+	v.SetDefault("Log", false)
 	v.SetDefault("ListenAddress", "")
 	v.SetDefault("ListenPort", 2801)
 	v.SetDefault("Debug", false)
@@ -62,10 +49,10 @@ func getConfig() *types.Configuration {
 	v.SetDefault("TLSServer.NoTLSPort", 2810)
 
 	v.SetDefault("Slack.WebhookURL", "")
-	v.SetDefault("Slack.Footer", "https://github.com/falcosecurity/falcosidekick")
-	v.SetDefault("Slack.Username", "Falcosidekick")
+	v.SetDefault("Slack.Footer", "https://github.com/kubearmor/KubeArmor")
+	v.SetDefault("Slack.Username", "Kubearmor")
 	v.SetDefault("Slack.Channel", "")
-	v.SetDefault("Slack.Icon", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Slack.Icon", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Slack.OutputFormat", "all")
 	v.SetDefault("Slack.MessageFormat", "")
 	v.SetDefault("Slack.MinimumPriority", "")
@@ -73,9 +60,9 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Slack.CheckCert", true)
 
 	v.SetDefault("Rocketchat.WebhookURL", "")
-	v.SetDefault("Rocketchat.Footer", "https://github.com/falcosecurity/falcosidekick")
-	v.SetDefault("Rocketchat.Username", "Falcosidekick")
-	v.SetDefault("Rocketchat.Icon", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Rocketchat.Footer", "https://github.com/kubearmor/KubeArmor")
+	v.SetDefault("Rocketchat.Username", "Kubearmor")
+	v.SetDefault("Rocketchat.Icon", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Rocketchat.OutputFormat", "all")
 	v.SetDefault("Rocketchat.MessageFormat", "")
 	v.SetDefault("Rocketchat.MinimumPriority", "")
@@ -83,9 +70,9 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Rocketchat.CheckCert", true)
 
 	v.SetDefault("Mattermost.WebhookURL", "")
-	v.SetDefault("Mattermost.Footer", "https://github.com/falcosecurity/falcosidekick")
-	v.SetDefault("Mattermost.Username", "Falcosidekick")
-	v.SetDefault("Mattermost.Icon", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Mattermost.Footer", "https://github.com/kubearmor/KubeArmor")
+	v.SetDefault("Mattermost.Username", "kubearmor")
+	v.SetDefault("Mattermost.Icon", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Mattermost.OutputFormat", "all")
 	v.SetDefault("Mattermost.MessageFormat", "")
 	v.SetDefault("Mattermost.MinimumPriority", "")
@@ -93,7 +80,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Mattermost.CheckCert", true)
 
 	v.SetDefault("Teams.WebhookURL", "")
-	v.SetDefault("Teams.ActivityImage", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Teams.ActivityImage", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Teams.OutputFormat", "all")
 	v.SetDefault("Teams.MinimumPriority", "")
 	v.SetDefault("Teams.MutualTLS", false)
@@ -107,7 +94,7 @@ func getConfig() *types.Configuration {
 
 	v.SetDefault("Discord.WebhookURL", "")
 	v.SetDefault("Discord.MinimumPriority", "")
-	v.SetDefault("Discord.Icon", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Discord.Icon", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Discord.MutualTLS", false)
 	v.SetDefault("Discord.CheckCert", true)
 
@@ -121,7 +108,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Alertmanager.DropEventThresholds", "10000:critical, 1000:critical, 100:critical, 10:warning, 1:warning")
 
 	v.SetDefault("Elasticsearch.HostPort", "")
-	v.SetDefault("Elasticsearch.Index", "falco")
+	v.SetDefault("Elasticsearch.Index", "kubearmor")
 	v.SetDefault("Elasticsearch.Type", "_doc")
 	v.SetDefault("Elasticsearch.MinimumPriority", "")
 	v.SetDefault("Elasticsearch.Suffix", "daily")
@@ -131,9 +118,9 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Elasticsearch.Password", "")
 
 	v.SetDefault("Influxdb.HostPort", "")
-	v.SetDefault("Influxdb.Database", "falco")
+	v.SetDefault("Influxdb.Database", "kubearmor")
 	v.SetDefault("Influxdb.Organization", "")
-	v.SetDefault("Influxdb.Bucket", "falco")
+	v.SetDefault("Influxdb.Bucket", "kubearmor")
 	v.SetDefault("Influxdb.Precision", "ns")
 	v.SetDefault("Influxdb.User", "")
 	v.SetDefault("Influxdb.Password", "")
@@ -176,7 +163,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("AWS.CloudWatchLogs.MinimumPriority", "")
 
 	v.SetDefault("AWS.S3.Bucket", "")
-	v.SetDefault("AWS.S3.Prefix", "falco")
+	v.SetDefault("AWS.S3.Prefix", "kubearmor")
 	v.SetDefault("AWS.S3.MinimumPriority", "")
 
 	v.SetDefault("AWS.SecurityLake.Bucket", "")
@@ -222,12 +209,12 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Opsgenie.CheckCert", true)
 
 	v.SetDefault("Statsd.Forwarder", "")
-	v.SetDefault("Statsd.Namespace", "falcosidekick.")
+	v.SetDefault("Statsd.Namespace", "kube-system.")
 
 	v.SetDefault("Prometheus.ExtraLabels", "")
 
 	v.SetDefault("Dogstatsd.Forwarder", "")
-	v.SetDefault("Dogstatsd.Namespace", "falcosidekick.")
+	v.SetDefault("Dogstatsd.Namespace", "kube-system.")
 	v.SetDefault("Dogstatsd.Tags", []string{})
 
 	v.SetDefault("Webhook.Address", "")
@@ -276,7 +263,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Googlechat.CheckCert", true)
 
 	v.SetDefault("Cliq.WebhookURL", "")
-	v.SetDefault("Cliq.Icon", "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick_color.png")
+	v.SetDefault("Cliq.Icon", "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991")
 	v.SetDefault("Cliq.OutputFormat", "all")
 	v.SetDefault("Cliq.UseEmoji", false)
 	v.SetDefault("Cliq.MessageFormat", "")
@@ -355,7 +342,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Wavefront.EndpointType", "")
 	v.SetDefault("Wavefront.EndpointHost", "")
 	v.SetDefault("Wavefront.EndpointToken", "")
-	v.SetDefault("Wavefront.MetricName", "falco.alert")
+	v.SetDefault("Wavefront.MetricName", "kubearmor.alert")
 	v.SetDefault("Wavefront.EndpointMetricPort", 2878)
 	v.SetDefault("Wavefront.MinimumPriority", "")
 	v.SetDefault("Wavefront.FlushIntervalSecods", 1)
@@ -385,7 +372,7 @@ func getConfig() *types.Configuration {
 
 	v.SetDefault("Yandex.S3.Endpoint", "https://storage.yandexcloud.net")
 	v.SetDefault("Yandex.S3.Bucket", "")
-	v.SetDefault("Yandex.S3.Prefix", "falco")
+	v.SetDefault("Yandex.S3.Prefix", "kubearmor")
 	v.SetDefault("Yamdex.S3.MinimumPriority", "")
 
 	v.SetDefault("Yandex.DataStreams.Endpoint", "https://yds.serverless.yandexcloud.net")
@@ -399,7 +386,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Syslog.MinimumPriority", "")
 
 	v.SetDefault("MQTT.Broker", "")
-	v.SetDefault("MQTT.Topic", "falco/events")
+	v.SetDefault("MQTT.Topic", "kubearmor/events")
 	v.SetDefault("MQTT.QOS", 0)
 	v.SetDefault("MQTT.Retained", false)
 	v.SetDefault("MQTT.User", "")
@@ -408,7 +395,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("MQTT.MinimumPriority", "")
 
 	v.SetDefault("Zincsearch.HostPort", "")
-	v.SetDefault("Zincsearch.Index", "falco")
+	v.SetDefault("Zincsearch.Index", "kubearmor")
 	v.SetDefault("Zincsearch.Username", "")
 	v.SetDefault("Zincsearch.Password", "")
 	v.SetDefault("Zincsearch.CheckCert", true)
@@ -427,7 +414,7 @@ func getConfig() *types.Configuration {
 	v.SetDefault("Spyderbat.OrgUID", "")
 	v.SetDefault("Spyderbat.APIKey", "")
 	v.SetDefault("Spyderbat.APIUrl", "https://api.spyderbat.com")
-	v.SetDefault("Spyderbat.Source", "falcosidekick")
+	v.SetDefault("Spyderbat.Source", "kubearmor")
 	v.SetDefault("Spyderbat.SourceDescription", "")
 	v.SetDefault("Spyderbat.MinimumPriority", "")
 
@@ -435,15 +422,15 @@ func getConfig() *types.Configuration {
 	v.SetDefault("TimescaleDB.Port", "5432")
 	v.SetDefault("TimescaleDB.User", "postgres")
 	v.SetDefault("TimescaleDB.Password", "postgres")
-	v.SetDefault("TimescaleDB.Database", "falcosidekick")
-	v.SetDefault("TimescaleDB.HypertableName", "falcosidekick_events")
+	v.SetDefault("TimescaleDB.Database", "kubeamror")
+	v.SetDefault("TimescaleDB.HypertableName", "kubearmor_events")
 	v.SetDefault("TimescaleDB.MinimumPriority", "")
 
 	v.SetDefault("Redis.Address", "")
 	v.SetDefault("Redis.Password", "")
 	v.SetDefault("Redis.Database", 0)
 	v.SetDefault("Redis.StorageType", "list")
-	v.SetDefault("Redis.Key", "falco")
+	v.SetDefault("Redis.Key", "kubearmor")
 	v.SetDefault("Redis.MinimumPriority", "")
 	v.SetDefault("Redis.MutualTls", false)
 	v.SetDefault("Redis.CheckCert", true)
@@ -463,7 +450,7 @@ func getConfig() *types.Configuration {
 
 	v.SetDefault("OpenObserve.HostPort", "")
 	v.SetDefault("OpenObserve.OrganizationName", "default")
-	v.SetDefault("OpenObserve.StreamName", "falco")
+	v.SetDefault("OpenObserve.StreamName", "kubearmor")
 	v.SetDefault("OpenObserve.MinimumPriority", "")
 	v.SetDefault("OpenObserve.MutualTls", false)
 	v.SetDefault("OpenObserve.CheckCert", true)
@@ -477,20 +464,6 @@ func getConfig() *types.Configuration {
 
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
-	if *configFile != "" {
-		d, f := path.Split(*configFile)
-		if d == "" {
-			d = "."
-		}
-		v.SetConfigName(f[0 : len(f)-len(filepath.Ext(f))])
-		v.AddConfigPath(d)
-		err := v.ReadInConfig()
-		if err != nil {
-			log.Printf("[ERROR] : Error when reading config file : %v\n", err)
-		}
-	}
-
-	v.GetStringSlice("TLSServer.NoTLSPaths")
 
 	v.GetStringMapString("Customfields")
 	v.GetStringMapString("Templatedfields")
@@ -592,22 +565,6 @@ func getConfig() *types.Configuration {
 		}
 	}
 
-	if value, present := os.LookupEnv("ALERTMANAGER_CUSTOMSEVERITYMAP"); present {
-		severitymap := strings.Split(value, ",")
-		for _, severitymatch := range severitymap {
-			priorityString, severityValue, found := strings.Cut(severitymatch, ":")
-			priority := types.Priority(priorityString)
-			if priority == types.Default {
-				log.Printf("[ERROR] : AlertManager - Priority '%v' is not a valid falco priority level", priorityString)
-				continue
-			} else if found {
-				c.Alertmanager.CustomSeverityMap[priority] = strings.TrimSpace(severityValue)
-			} else {
-				log.Printf("[ERROR] : AlertManager - No severity given to '%v' (tuple extracted: '%v')", priorityString, severitymatch)
-			}
-		}
-	}
-
 	if value, present := os.LookupEnv("ALERTMANAGER_DROPEVENTTHRESHOLDS"); present {
 		c.Alertmanager.DropEventThresholds = value
 	}
@@ -666,7 +623,7 @@ func getConfig() *types.Configuration {
 			}
 			priority := types.Priority(strings.TrimSpace(values[1]))
 			if priority == types.Default {
-				log.Printf("[ERROR] : AlertManager - Priority '%v' is not a valid falco priority level", priority.String())
+				log.Printf("[ERROR] : AlertManager - Priority '%v' is not a valid kubearmor priority level", priority.String())
 				continue
 			}
 			c.Alertmanager.DropEventThresholdsList = append(c.Alertmanager.DropEventThresholdsList, types.ThresholdConfig{Priority: priority, Value: valueInt})

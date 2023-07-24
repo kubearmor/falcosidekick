@@ -16,8 +16,8 @@ func TestPagerdutyPayload(t *testing.T) {
 		RoutingKey: "",
 		Action:     "trigger",
 		Payload: &pagerduty.V2Payload{
-			Summary:   "This is a test from falcosidekick",
-			Source:    "falco",
+			Summary:   "This is a test from kubearmor",
+			Source:    "kubearmor",
 			Severity:  "critical",
 			Timestamp: "2001-01-01T01:10:00Z",
 			Component: "",
@@ -25,13 +25,13 @@ func TestPagerdutyPayload(t *testing.T) {
 			Class:     "",
 			Details: map[string]interface{}{
 				"hostname":  "test-host",
-				"proc.name": "falcosidekick",
+				"proc.name": "Deimos",
 				"proc.tty":  float64(1234),
 			},
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	json.Unmarshal([]byte(falcoTestInput), &f)
 
 	event := createPagerdutyEvent(f, types.PagerdutyConfig{})

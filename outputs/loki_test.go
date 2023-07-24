@@ -20,12 +20,12 @@ func TestNewLokiPayload(t *testing.T) {
 					"source":   "syscalls",
 					"priority": "Debug",
 				},
-				Values: []lokiValue{[]string{"978311400000000000", "This is a test from falcosidekick"}},
+				Values: []lokiValue{[]string{"978311400000000000", "This is a test from Kubearmor"}},
 			},
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	output := newLokiPayload(f, &types.Configuration{})
 

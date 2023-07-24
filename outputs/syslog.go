@@ -32,54 +32,30 @@ func isValidProtocolString(protocol string) bool {
 	return protocol == TCP || protocol == UDP
 }
 
-func getCEFSeverity(priority types.PriorityType) string {
+func getCEFSeverity(priority string) string {
 	switch priority {
-	case types.Debug:
-		return "0"
-	case types.Informational:
+	case "Log":
 		return "3"
-	case types.Notice:
-		return "4"
-	case types.Warning:
-		return "6"
-	case types.Error:
-		return "7"
-	case types.Critical:
-		return "8"
-	case types.Alert:
+	case "Alert":
 		return "9"
-	case types.Emergency:
-		return "10"
 	default:
 		return "Uknown"
 	}
 }
 
-func (c *Client) SyslogPost(falcopayload types.FalcoPayload) {
-	c.Stats.Syslog.Add(Total, 1)
+func (c *Client) SyslogPost(kubearmorpayload types.KubearmorPayload) {
+	//c.Stats.Syslog.Add(Total, 1)
 	endpoint := fmt.Sprintf("%s:%s", c.Config.Syslog.Host, c.Config.Syslog.Port)
-
+	fmt.Println("endpoint ", endpoint)
 	var priority syslog.Priority
-	switch falcopayload.Priority {
-	case types.Emergency:
-		priority = syslog.LOG_EMERG
-	case types.Alert:
+	switch kubearmorpayload.EventType {
+	case "Alert":
 		priority = syslog.LOG_ALERT
-	case types.Critical:
-		priority = syslog.LOG_CRIT
-	case types.Error:
-		priority = syslog.LOG_ERR
-	case types.Warning:
-		priority = syslog.LOG_WARNING
-	case types.Notice:
-		priority = syslog.LOG_NOTICE
-	case types.Informational:
+	case "Log":
 		priority = syslog.LOG_INFO
-	case types.Debug:
-		priority = syslog.LOG_DEBUG
 	}
 
-	sysLog, err := syslog.Dial(c.Config.Syslog.Protocol, endpoint, priority, Falco)
+	sysLog, err := syslog.Dial(c.Config.Syslog.Protocol, endpoint, priority, Kubearmor)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:error"})
 		c.Stats.Syslog.Add(Error, 1)
@@ -87,39 +63,42 @@ func (c *Client) SyslogPost(falcopayload types.FalcoPayload) {
 		log.Printf("[ERROR] : Syslog - %v\n", err)
 		return
 	}
+	fmt.Println("syslog - ", sysLog)
 
 	var payload []byte
+	timestamp := time.Unix(kubearmorpayload.Timestamp, 0)
 
 	if c.Config.Syslog.Format == "cef" {
 		s := fmt.Sprintf(
-			"CEF:0|Falcosecurity|Falco|1.0|Falco Event|%v|%v|uuid=%v start=%v msg=%v source=%v",
-			falcopayload.Rule,
-			getCEFSeverity(falcopayload.Priority),
-			falcopayload.UUID,
-			falcopayload.Time.Format(time.RFC3339),
-			falcopayload.Output,
-			falcopayload.Source,
+			"CEF:0|Accuknox|Kubearmor|1.0|Kubearmor Event|%v|uid=%v start=%v",
+			kubearmorpayload.EventType,
+			fmt.Sprint(kubearmorpayload.OutputFields["UID"]),
+			timestamp.Format(time.RFC3339),
 		)
-		if falcopayload.Hostname != "" {
-			s += " hostname=" + falcopayload.Hostname
+		s += " " + kubearmorpayload.EventType + "="
+		for i, j := range kubearmorpayload.OutputFields {
+			switch v := j.(type) {
+			case string:
+				if v == "" {
+					continue
+				}
+				s += fmt.Sprintf("%v:%v ", i, v)
+			default:
+				vv := fmt.Sprint(v)
+				s += fmt.Sprintf("%v:%v ", i, vv)
+			}
 		}
-		s += " outputfields="
-		for i, j := range falcopayload.OutputFields {
-			s += fmt.Sprintf("%v:%v ", i, j)
-		}
-		if len(falcopayload.Tags) != 0 {
-			s += "tags=" + strings.Join(falcopayload.Tags, ",")
-		}
+		fmt.Println("payload ", s)
 		payload = []byte(strings.TrimSuffix(s, " "))
 	} else {
-		payload, _ = json.Marshal(falcopayload)
+		payload, _ = json.Marshal(kubearmorpayload)
 	}
 
 	_, err = sysLog.Write(payload)
 	if err != nil {
-		go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:error"})
-		c.Stats.Syslog.Add(Error, 1)
-		c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": Error}).Inc()
+		// go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:error"})
+		// c.Stats.Syslog.Add(Error, 1)
+		// c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": Error}).Inc()
 		log.Printf("[ERROR] : Syslog - %v\n", err)
 		return
 	}
@@ -127,4 +106,51 @@ func (c *Client) SyslogPost(falcopayload types.FalcoPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:syslog", "status:ok"})
 	c.Stats.Syslog.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "syslog", "status": OK}).Inc()
+}
+
+func (c *Client) WatchSyslogsAlerts() error {
+	uid := "syslog"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			fmt.Println("got it ", resp)
+			c.SyslogPost(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchSyslogLogs() error {
+	uid := "syslog"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.SyslogPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

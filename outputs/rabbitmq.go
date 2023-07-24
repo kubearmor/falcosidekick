@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/falcosecurity/falcosidekick/types"
@@ -40,10 +41,10 @@ func NewRabbitmqClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // Publish sends a message to a Rabbitmq
-func (c *Client) Publish(falcopayload types.KubearmorPayload) {
+func (c *Client) Publish(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Rabbitmq.Add(Total, 1)
 
-	payload, _ := json.Marshal(falcopayload)
+	payload, _ := json.Marshal(kubearmorpayload)
 
 	err := c.RabbitmqClient.Publish("", c.Config.Rabbitmq.Queue, false, false, amqp.Publishing{
 		ContentType: "text/plain",
@@ -76,10 +77,33 @@ func (c *Client) WatchRabbitmqPublishAlerts() error {
 	Running := true
 	for Running {
 		select {
-		// case <-Context().Done():
-		// 	return nil
 		case resp := <-conn:
 			c.Publish(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchRabbitmqPublishLogs() error {
+	uid := "Rabbitmq"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	Running := true
+	for Running {
+		select {
+		case resp := <-conn:
+			c.Publish(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
 		}
 	}
 

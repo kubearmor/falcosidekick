@@ -2,8 +2,8 @@ package outputs
 
 import (
 	"bytes"
+	"fmt"
 	"log"
-	"strings"
 
 	"github.com/falcosecurity/falcosidekick/types"
 )
@@ -36,13 +36,13 @@ type googlechatPayload struct {
 	Cards []card `json:"cards,omitempty"`
 }
 
-func newGooglechatPayload(falcopayload types.FalcoPayload, config *types.Configuration) googlechatPayload {
+func newGooglechatPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) googlechatPayload {
 	var messageText string
 	widgets := []widget{}
 
 	if config.Googlechat.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Googlechat.MessageFormatTemplate.Execute(buf, falcopayload); err != nil {
+		if err := config.Googlechat.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
 			log.Printf("[ERROR] : GoogleChat - Error expanding Google Chat message %v", err)
 		} else {
 			messageText = buf.String()
@@ -55,33 +55,23 @@ func newGooglechatPayload(falcopayload types.FalcoPayload, config *types.Configu
 		}
 	}
 
-	for _, i := range getSortedStringKeys(falcopayload.OutputFields) {
+	for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
 		widgets = append(widgets, widget{
 			KeyValue: keyValue{
 				TopLabel: i,
-				Content:  falcopayload.OutputFields[i].(string),
+				Content:  fmt.Sprint(kubearmorpayload.OutputFields[i]),
 			},
 		})
 	}
 
-	widgets = append(widgets, widget{KeyValue: keyValue{"rule", falcopayload.Rule}})
-	widgets = append(widgets, widget{KeyValue: keyValue{"priority", falcopayload.Priority.String()}})
-	widgets = append(widgets, widget{KeyValue: keyValue{"source", falcopayload.Source}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"priority", kubearmorpayload.EventType}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"source pod", kubearmorpayload.OutputFields["PodName"].(string)}})
 
-	if falcopayload.Hostname != "" {
-		widgets = append(widgets, widget{KeyValue: keyValue{Hostname, falcopayload.Hostname}})
+	if kubearmorpayload.Hostname != "" {
+		widgets = append(widgets, widget{KeyValue: keyValue{Hostname, kubearmorpayload.Hostname}})
 	}
 
-	if len(falcopayload.Tags) != 0 {
-		widgets = append(widgets, widget{
-			KeyValue: keyValue{
-				TopLabel: "tags",
-				Content:  strings.Join(falcopayload.Tags, ", "),
-			},
-		})
-	}
-
-	widgets = append(widgets, widget{KeyValue: keyValue{"time", falcopayload.Time.String()}})
+	widgets = append(widgets, widget{KeyValue: keyValue{"time", fmt.Sprint(kubearmorpayload.Timestamp)}})
 
 	return googlechatPayload{
 		Text: messageText,
@@ -96,10 +86,10 @@ func newGooglechatPayload(falcopayload types.FalcoPayload, config *types.Configu
 }
 
 // GooglechatPost posts event to Google Chat
-func (c *Client) GooglechatPost(falcopayload types.FalcoPayload) {
+func (c *Client) GooglechatPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.GoogleChat.Add(Total, 1)
 
-	err := c.Post(newGooglechatPayload(falcopayload, c.Config))
+	err := c.Post(newGooglechatPayload(kubearmorpayload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:googlechat", "status:error"})
 		c.Stats.GoogleChat.Add(Error, 1)

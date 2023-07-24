@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: deimos-deployment
+spec:
+  selector:
+    matchLabels:
+      kubearmor-app: deimos
+  template:
+    metadata:
+      labels:
+        kubearmor-app: deimos
+    spec:
+      serviceAccountName: deimos-serviceaccount
+      containers:
+      - name: deimos-container
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        envFrom:
+        - secretRef:
+            name: deimos-secret

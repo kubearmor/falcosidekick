@@ -2,8 +2,6 @@ package outputs
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/falcosecurity/falcosidekick/types"
@@ -60,18 +58,17 @@ func NewWavefrontClient(config *types.Configuration, stats *types.Statistics, pr
 }
 
 // WavefrontPost sends metrics to WaveFront.
-func (c *Client) WavefrontPost(falcopayload types.FalcoPayload) {
+func (c *Client) WavefrontPost(kubearmorpayload types.KubearmorPayload) {
 
 	tags := make(map[string]string)
-	tags["severity"] = falcopayload.Priority.String()
-	tags["rule"] = falcopayload.Rule
-	tags["source"] = falcopayload.Source
+	tags["severity"] = kubearmorpayload.EventType
+	tags["source"] = kubearmorpayload.OutputFields["PodName"].(string)
 
-	if falcopayload.Hostname != "" {
-		tags[Hostname] = falcopayload.Hostname
+	if kubearmorpayload.Hostname != "" {
+		tags[Hostname] = kubearmorpayload.Hostname
 	}
 
-	for tag, value := range falcopayload.OutputFields {
+	for tag, value := range kubearmorpayload.OutputFields {
 		switch v := value.(type) {
 		case string:
 			tags[tag] = v
@@ -80,30 +77,22 @@ func (c *Client) WavefrontPost(falcopayload types.FalcoPayload) {
 		}
 	}
 
-	if len(falcopayload.Tags) != 0 {
-		tags["tags"] = strings.Join(falcopayload.Tags, ", ")
-
-	}
-
 	c.Stats.Wavefront.Add(Total, 1)
 
 	if c.WavefrontSender != nil {
 		sender := *c.WavefrontSender
 		// TODO: configurable metric name
-		if err := sender.SendMetric(c.Config.Wavefront.MetricName, 1, falcopayload.Time.UnixNano(), "falco-exporter", tags); err != nil {
+		if err := sender.SendMetric(c.Config.Wavefront.MetricName, 1, kubearmorpayload.Timestamp, "kubearmor", tags); err != nil {
 			c.Stats.Wavefront.Add(Error, 1)
 			c.PromStats.Outputs.With(map[string]string{"destination": "wavefront", "status": Error}).Inc()
-			log.Printf("[ERROR] : Wavefront - Unable to send event %s: %s\n", falcopayload.Rule, err)
 			return
 		}
 		if err := sender.Flush(); err != nil {
 			c.Stats.Wavefront.Add(Error, 1)
 			c.PromStats.Outputs.With(map[string]string{"destination": "wavefront", "status": Error}).Inc()
-			log.Printf("[ERROR] : Wavefront - Unable to flush event %s: %s\n", falcopayload.Rule, err)
 			return
 		}
 		c.Stats.Wavefront.Add(OK, 1)
 		c.PromStats.Outputs.With(map[string]string{"destination": "wavefront", "status": OK}).Inc()
-		log.Printf("[INFO]  : Wavefront - Send Event OK %s\n", falcopayload.Rule)
 	}
 }

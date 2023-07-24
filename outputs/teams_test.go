@@ -12,18 +12,18 @@ import (
 func TestNewTeamsPayload(t *testing.T) {
 	expectedOutput := teamsPayload{
 		Type:       "MessageCard",
-		Summary:    "This is a test from falcosidekick",
+		Summary:    "This is a test from kubearmor",
 		ThemeColor: "ccfff2",
 		Sections: []teamsSection{
 			{
-				ActivityTitle:    "Falco Sidekick",
+				ActivityTitle:    "Kubearmor",
 				ActivitySubTitle: "2001-01-01 01:10:00 +0000 UTC",
 				ActivityImage:    "",
-				Text:             "This is a test from falcosidekick",
+				Text:             "This is a test from kubearmor",
 				Facts: []teamsFact{
 					{
 						Name:  "proc.name",
-						Value: "falcosidekick",
+						Value: "kubearmor",
 					},
 					{
 						Name:  "rule",
@@ -50,7 +50,7 @@ func TestNewTeamsPayload(t *testing.T) {
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 
 	output := newTeamsPayload(f, &types.Configuration{})

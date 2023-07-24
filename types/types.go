@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"expvar"
 	"text/template"
-	"time"
 
 	"github.com/embano1/memlog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,15 +12,18 @@ import (
 
 // FalcoPayload is a struct to map falco event json
 type KubearmorPayload struct {
-	UUID         string                 `json:"uuid,omitempty"`
-	Output       string                 `json:"output"`
-	Priority     PriorityType           `json:"priority"`
-	Rule         string                 `json:"rule"`
-	Time         time.Time              `json:"time"`
-	OutputFields map[string]interface{} `json:"output_fields"`
-	Source       string                 `json:"source"`
-	Tags         []string               `json:"tags,omitempty"`
-	Hostname     string                 `json:"hostname,omitempty"`
+	Timestamp    int64                  ` json:"Timestamp,omitempty"`
+	UpdatedTime  string                 ` json:"UpdatedTime,omitempty"`
+	ClusterName  string                 ` json:"ClusterName,omitempty"`
+	Hostname     string                 ` json:"HostName,omitempty"`
+	EventType    string                 ` json:"EventType,omitempty"`
+	OutputFields map[string]interface{} `json:"Detail"`
+}
+
+type Podowner struct {
+	Ref       string ` json:"Ref,omitempty"`
+	Name      string ` json:"Name,omitempty"`
+	Namespace string ` json:"Namespace,omitempty"`
 }
 
 func (f KubearmorPayload) String() string {
@@ -29,24 +31,9 @@ func (f KubearmorPayload) String() string {
 	return string(j)
 }
 
-func (f KubearmorPayload) Check() bool {
-	if f.Priority.String() == "" {
-		return false
-	}
-	if f.Rule == "" {
-		return false
-	}
-	if f.Time.IsZero() {
-		return false
-	}
-	if len(f.OutputFields) == 0 {
-		return false
-	}
-	return true
-}
-
 // Configuration is a struct to store configuration
 type Configuration struct {
+	Log                bool
 	MutualTLSFilesPath string
 	MutualTLSClient    MutualTLSClient
 	TLSServer          TLSServer

@@ -31,8 +31,8 @@ const (
 	Markdown  string = "markdown"
 	Hostname  string = "hostname"
 
-	DefaultFooter  string = "https://github.com/falcosecurity/falcosidekick"
-	DefaultIconURL string = "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick.png"
+	DefaultFooter  string = "https://github.com/kubearmor/KubeArmor"
+	DefaultIconURL string = "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991"
 
 	// Colors
 	PaleCyan  string = "#ccfff2"
@@ -42,11 +42,11 @@ const (
 	Lightcyan string = "#5bffb5"
 	Orange    string = "#ff5400"
 
-	Kubeless string = "Kubeless"
-	Openfaas string = "OpenFaas"
-	Fission  string = "Fission"
-	Falco    string = "Falco"
-	MQTT     string = "MQTT"
+	Kubeless  string = "Kubeless"
+	Openfaas  string = "OpenFaas"
+	Fission   string = "Fission"
+	Kubearmor string = "Kubearmor"
+	MQTT      string = "MQTT"
 
 	UDP string = "udp"
 	TCP string = "tcp"

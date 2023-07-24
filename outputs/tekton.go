@@ -7,10 +7,10 @@ import (
 )
 
 // TektonPost posts event to EventListner
-func (c *Client) TektonPost(falcopayload types.FalcoPayload) {
+func (c *Client) TektonPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Tekton.Add(Total, 1)
 
-	err := c.Post(falcopayload)
+	err := c.Post(kubearmorpayload)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:tekton", "status:error"})
 		c.Stats.Tekton.Add(Error, 1)

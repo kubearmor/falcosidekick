@@ -1,9 +1,12 @@
 package outputs
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/google/uuid"
 )
 
 const (
@@ -19,37 +22,29 @@ type datadogPayload struct {
 	Tags       []string `json:"tags,omitempty"`
 }
 
-func newDatadogPayload(falcopayload types.FalcoPayload) datadogPayload {
+func newDatadogPayload(kubearmorpayload types.KubearmorPayload) datadogPayload {
 	var d datadogPayload
 	var tags []string
 
-	for i, j := range falcopayload.OutputFields {
+	for i, j := range kubearmorpayload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			tags = append(tags, i+":"+v)
 		default:
+			vv := fmt.Sprintln(v)
+			tags = append(tags, i+":"+vv)
 			continue
 		}
 	}
-	tags = append(tags, "source:"+falcopayload.Source)
-	if falcopayload.Hostname != "" {
-		tags = append(tags, Hostname+":"+falcopayload.Hostname)
-	}
-	if len(falcopayload.Tags) != 0 {
-		tags = append(tags, falcopayload.Tags...)
-	}
+
 	d.Tags = tags
 
-	d.Title = falcopayload.Rule
-	d.Text = falcopayload.Output
-	d.SourceType = "falco"
+	d.SourceType = "kubearmor"
 
 	var status string
-	switch falcopayload.Priority {
-	case types.Emergency, types.Alert, types.Critical, types.Error:
+	switch kubearmorpayload.EventType {
+	case "Alert":
 		status = Error
-	case types.Warning:
-		status = Warning
 	default:
 		status = Info
 	}
@@ -59,10 +54,10 @@ func newDatadogPayload(falcopayload types.FalcoPayload) datadogPayload {
 }
 
 // DatadogPost posts event to Datadog
-func (c *Client) DatadogPost(falcopayload types.FalcoPayload) {
+func (c *Client) DatadogPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Datadog.Add(Total, 1)
 
-	err := c.Post(newDatadogPayload(falcopayload))
+	err := c.Post(newDatadogPayload(kubearmorpayload))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:datadog", "status:error"})
 		c.Stats.Datadog.Add(Error, 1)
@@ -74,4 +69,50 @@ func (c *Client) DatadogPost(falcopayload types.FalcoPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:datadog", "status:ok"})
 	c.Stats.Datadog.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "datadog", "status": OK}).Inc()
+}
+
+func (c *Client) WatchDatadogPostAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.DatadogPost(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchDatadogPostLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.DatadogPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/falcosecurity/falcosidekick/types"
@@ -28,9 +29,9 @@ type resource struct {
 }
 
 const (
-	clusterPolicyReportBaseName = "falco-cluster-policy-report-"
-	policyReportBaseName        = "falco-policy-report-"
-	policyReportSource          = "Falco"
+	clusterPolicyReportBaseName = "kubearmor-cluster-policy-report-"
+	policyReportBaseName        = "kubearmor-policy-report-"
+	policyReportSource          = "kubearmor"
 
 	high     wgpolicy.PolicyResultSeverity = "high"
 	low      wgpolicy.PolicyResultSeverity = "low"
@@ -57,7 +58,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterPolicyReportBaseName,
 			Labels: map[string]string{
-				"app.kubernetes.io/created-by": "falcosidekick",
+				"app.kubernetes.io/created-by": "kubearmor",
 			},
 		},
 		Summary: wgpolicy.PolicyReportSummary{
@@ -65,6 +66,7 @@ var (
 			Warn: 0,
 		},
 	}
+
 	falcosidekickNamespace    string
 	falcosidekickNamespaceUID k8stypes.UID
 
@@ -131,7 +133,7 @@ func NewPolicyReportClient(config *types.Configuration, stats *types.Statistics,
 }
 
 // UpdateOrCreatePolicyReport creates/updates PolicyReport/ClusterPolicyReport Resource in Kubernetes
-func (c *Client) UpdateOrCreatePolicyReport(falcopayload types.FalcoPayload) {
+func (c *Client) UpdateOrCreatePolicyReport(falcopayload types.KubearmorPayload) {
 	c.Stats.PolicyReport.Add(Total, 1)
 
 	event, namespace := newResult(falcopayload)
@@ -155,26 +157,27 @@ func (c *Client) UpdateOrCreatePolicyReport(falcopayload types.FalcoPayload) {
 }
 
 // newResult creates a new entry for Reports
-func newResult(falcopayload types.FalcoPayload) (_ *wgpolicy.PolicyReportResult, namespace string) {
+func newResult(KubearmorPayload types.KubearmorPayload) (_ *wgpolicy.PolicyReportResult, namespace string) {
 	var properties = make(map[string]string)
-	for property, value := range falcopayload.OutputFields {
-		if property == targetNS || property == "k8s.ns.name" {
-			namespace = toString(value) // not empty for policy reports
+
+	for property, value := range KubearmorPayload.OutputFields {
+		switch v := value.(type) {
+		case string:
+			properties[property] = toString(value)
+		default:
+			vv := fmt.Sprint(v)
+			properties[property] = toString(vv)
 		}
-		properties[property] = toString(value)
+
 	}
 
+	timestamp := time.Unix(KubearmorPayload.Timestamp, 0)
 	return &wgpolicy.PolicyReportResult{
-		Policy:      falcopayload.Rule,
-		Category:    "SI - System and Information Integrity",
-		Source:      policyReportSource,
-		Scored:      false,
-		Timestamp:   metav1.Timestamp{Seconds: int64(falcopayload.Time.Second()), Nanos: int32(falcopayload.Time.Nanosecond())},
-		Severity:    mapSeverity(falcopayload),
-		Result:      mapResult(falcopayload),
-		Description: falcopayload.Output,
-		Properties:  properties,
-		Subjects:    mapResource(falcopayload, namespace),
+		Category:   "Kubearmor Policy Alert",
+		Source:     policyReportSource,
+		Timestamp:  metav1.Timestamp{Seconds: int64(timestamp.Second()), Nanos: int32(timestamp.Nanosecond())},
+		Properties: properties,
+		Subjects:   mapResource(KubearmorPayload, namespace),
 	}, namespace
 }
 
@@ -213,7 +216,7 @@ func updatePolicyReports(c *Client, namespace string, event *wgpolicy.PolicyRepo
 			ObjectMeta: metav1.ObjectMeta{
 				Name: policyReportBaseName + uuid.NewString()[:8],
 				Labels: map[string]string{
-					"app.kubernetes.io/created-by": "falcosidekick",
+					"app.kubernetes.io/created-by": "kubearmor",
 				},
 			},
 			Summary: wgpolicy.PolicyReportSummary{
@@ -244,6 +247,7 @@ func updatePolicyReports(c *Client, namespace string, event *wgpolicy.PolicyRepo
 			policyReports[namespace].Results = policyReports[namespace].Results[1:]
 		}
 	}
+
 	policyReports[namespace].Results = append(policyReports[namespace].Results, event)
 	_, getErr := policyr.Get(context.Background(), policyReports[namespace].Name, metav1.GetOptions{})
 	if errors.IsNotFound(getErr) {
@@ -385,31 +389,7 @@ func summaryDeletion(summary *wgpolicy.PolicyReportSummary, result wgpolicy.Poli
 	}
 }
 
-func mapResult(event types.FalcoPayload) wgpolicy.PolicyResult {
-	if event.Priority <= types.Notice {
-		return skip
-	} else if event.Priority == types.Warning {
-		return warn
-	} else {
-		return fail
-	}
-}
-
-func mapSeverity(event types.FalcoPayload) wgpolicy.PolicyResultSeverity {
-	if event.Priority <= types.Informational {
-		return info
-	} else if event.Priority <= types.Notice {
-		return low
-	} else if event.Priority <= types.Warning {
-		return medium
-	} else if event.Priority <= types.Error {
-		return high
-	} else {
-		return critical
-	}
-}
-
-func mapResource(event types.FalcoPayload, ns string) []*corev1.ObjectReference {
+func mapResource(event types.KubearmorPayload, ns string) []*corev1.ObjectReference {
 	name := determineResourceName(event.OutputFields)
 	if name != "" {
 		return nil
@@ -451,4 +431,27 @@ func determineResourceName(outputFields map[string]interface{}) string {
 
 func toString(value interface{}) string {
 	return fmt.Sprintf("%v", value)
+}
+
+func (c *Client) WatchPolicyAlerts() error {
+	uid := "policy"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.UpdateOrCreatePolicyReport(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
 }

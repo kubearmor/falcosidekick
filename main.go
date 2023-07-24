@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -71,8 +71,6 @@ var (
 	config                        *types.Configuration
 	stats                         *types.Statistics
 	promStats                     *types.PromStatistics
-
-	regPromLabels *regexp.Regexp
 )
 
 func init() {
@@ -84,11 +82,13 @@ func init() {
 		return
 	}
 
-	regPromLabels, _ = regexp.Compile("^[a-zA-Z_:][a-zA-Z0-9_:]*$")
-
 	config = getConfig()
 	stats = getInitStats()
+
 	promStats = getInitPromStats(config)
+
+	logbool := config.Log
+	outputs.Initvariable(logbool)
 
 	nullClient = &outputs.Client{
 		OutputType:      "null",
@@ -490,7 +490,6 @@ func init() {
 			outputs.EnabledOutputs = append(outputs.EnabledOutputs, "WebUI")
 		}
 	}
-
 	if config.PolicyReport.Enabled {
 		var err error
 		policyReportClient, err = outputs.NewPolicyReportClient(config, stats, promStats, statsdClient, dogstatsdClient)
@@ -500,7 +499,6 @@ func init() {
 			outputs.EnabledOutputs = append(outputs.EnabledOutputs, "PolicyReport")
 		}
 	}
-
 	if config.Openfaas.FunctionName != "" {
 		var err error
 		openfaasClient, err = outputs.NewOpenfaasClient(config, stats, promStats, statsdClient, dogstatsdClient)
@@ -603,6 +601,7 @@ func init() {
 
 	if config.Syslog.Host != "" {
 		var err error
+		fmt.Println("config syslog")
 		syslogClient, err = outputs.NewSyslogClient(config, stats, promStats, statsdClient, dogstatsdClient)
 		if err != nil {
 			config.Syslog.Host = ""
@@ -711,25 +710,15 @@ func init() {
 		}
 	}
 
-	if config.Dynatrace.APIToken != "" && config.Dynatrace.APIUrl != "" {
-		var err error
-		dynatraceApiUrl := strings.TrimRight(config.Dynatrace.APIUrl, "/") + "/v2/logs/ingest"
-		dynatraceClient, err = outputs.NewClient("Dynatrace", dynatraceApiUrl, false, config.Dynatrace.CheckCert, config, stats, promStats, statsdClient, dogstatsdClient)
-		if err != nil {
-			config.Dynatrace.APIToken = ""
-			config.Dynatrace.APIUrl = ""
-		} else {
-			outputs.EnabledOutputs = append(outputs.EnabledOutputs, "Dynatrace")
-		}
-	}
-
-	log.Printf("[INFO]  : Falco Sidekick version: %s\n", GetVersionInfo().GitVersion)
 	log.Printf("[INFO]  : Enabled Outputs : %s\n", outputs.EnabledOutputs)
 
 }
 
 func main() {
+	fmt.Println("Starting....")
+	createReceiveBuffer()
 	GetLogsFromKubearmorRelay()
+
 }
 
 func serveTLS(server *http.Server, errs chan<- error) {

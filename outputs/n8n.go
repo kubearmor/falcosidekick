@@ -7,7 +7,7 @@ import (
 )
 
 // N8NPost posts event to an URL
-func (c *Client) N8NPost(falcopayload types.FalcoPayload) {
+func (c *Client) N8NPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.N8N.Add(Total, 1)
 
 	if c.Config.N8N.User != "" && c.Config.N8N.Password != "" {
@@ -22,7 +22,7 @@ func (c *Client) N8NPost(falcopayload types.FalcoPayload) {
 		c.AddHeader(c.Config.N8N.HeaderAuthName, c.Config.N8N.HeaderAuthValue)
 	}
 
-	err := c.Post(falcopayload)
+	err := c.Post(kubearmorpayload)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:n8n", "status:error"})
 		c.Stats.N8N.Add(Error, 1)

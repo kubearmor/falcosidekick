@@ -45,23 +45,17 @@ func NewTimescaleDBClient(config *types.Configuration, stats *types.Statistics, 
 	}, nil
 }
 
-func newTimescaleDBPayload(falcopayload types.FalcoPayload, config *types.Configuration) timescaledbPayload {
+func newTimescaleDBPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) timescaledbPayload {
 	vals := make(map[string]any, 7+len(config.Customfields)+len(config.Templatedfields))
-	vals[Time] = falcopayload.Time
-	vals[Rule] = falcopayload.Rule
-	vals[Priority] = falcopayload.Priority.String()
-	vals[Source] = falcopayload.Source
-	vals["output"] = falcopayload.Output
+	vals[Time] = kubearmorpayload.Timestamp
+	vals[Priority] = kubearmorpayload.EventType
+	vals["Source Pod"] = kubearmorpayload.OutputFields["PodName"].(string)
 
-	if len(falcopayload.Tags) != 0 {
-		vals[Tags] = strings.Join(falcopayload.Tags, ",")
+	if kubearmorpayload.Hostname != "" {
+		vals[Hostname] = kubearmorpayload.Hostname
 	}
 
-	if falcopayload.Hostname != "" {
-		vals[Hostname] = falcopayload.Hostname
-	}
-
-	for i, j := range falcopayload.OutputFields {
+	for i, j := range kubearmorpayload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			for k := range config.Customfields {
@@ -108,11 +102,11 @@ func newTimescaleDBPayload(falcopayload types.FalcoPayload, config *types.Config
 	return timescaledbPayload{SQL: sql, Values: retVals}
 }
 
-func (c *Client) TimescaleDBPost(falcopayload types.FalcoPayload) {
+func (c *Client) TimescaleDBPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.TimescaleDB.Add(Total, 1)
 
 	var ctx = context.Background()
-	tsdbPayload := newTimescaleDBPayload(falcopayload, c.Config)
+	tsdbPayload := newTimescaleDBPayload(kubearmorpayload, c.Config)
 	_, err := c.TimescaleDBClient.Exec(ctx, tsdbPayload.SQL, tsdbPayload.Values...)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:timescaledb", "status:error"})

@@ -45,11 +45,11 @@ func NewRedisClient(config *types.Configuration, stats *types.Statistics, promSt
 	}, nil
 }
 
-func (c *Client) RedisPost(falcopayload types.FalcoPayload) {
+func (c *Client) RedisPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Redis.Add(Total, 1)
-	redisPayload, _ := json.Marshal(falcopayload)
+	redisPayload, _ := json.Marshal(kubearmorpayload)
 	if strings.ToLower(c.Config.Redis.StorageType) == "hashmap" {
-		_, err := c.RedisClient.HSet(context.Background(), c.Config.Redis.Key, falcopayload.UUID, redisPayload).Result()
+		_, err := c.RedisClient.HSet(context.Background(), c.Config.Redis.Key, kubearmorpayload.OutputFields["UID"], redisPayload).Result()
 		if err != nil {
 			c.ReportError(err)
 		}

@@ -13,13 +13,13 @@ import (
 func TestNewRocketchatPayload(t *testing.T) {
 	expectedOutput := slackPayload{
 		Text:     "Rule: Test rule Priority: Debug",
-		Username: "Falcosidekick",
+		Username: "Kubearmor",
 		IconURL:  DefaultIconURL,
 		Attachments: []slackAttachment{
 			{
-				Fallback: "This is a test from falcosidekick",
+				Fallback: "This is a test from kubearmor",
 				Color:    PaleCyan,
-				Text:     "This is a test from falcosidekick",
+				Text:     "This is a test from kubearmor",
 				Footer:   "",
 				Fields: []slackAttachmentField{
 					{
@@ -62,11 +62,11 @@ func TestNewRocketchatPayload(t *testing.T) {
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	config := &types.Configuration{
 		Rocketchat: types.RocketchatOutputConfig{
-			Username: "Falcosidekick",
+			Username: "Kubearmor",
 			Icon:     DefaultIconURL,
 		},
 	}

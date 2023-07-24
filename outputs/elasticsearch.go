@@ -1,15 +1,17 @@
 package outputs
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"time"
 
 	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/google/uuid"
 )
 
 // ElasticsearchPost posts event to Elasticsearch
-func (c *Client) ElasticsearchPost(falcopayload types.FalcoPayload) {
+func (c *Client) ElasticsearchPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Elasticsearch.Add(Total, 1)
 
 	current := time.Now()
@@ -43,7 +45,7 @@ func (c *Client) ElasticsearchPost(falcopayload types.FalcoPayload) {
 		c.AddHeader(i, j)
 	}
 
-	err = c.Post(falcopayload)
+	err = c.Post(kubearmorpayload)
 	if err != nil {
 		c.setElasticSearchErrorMetrics()
 		log.Printf("[ERROR] : ElasticSearch - %v\n", err)
@@ -61,4 +63,47 @@ func (c *Client) setElasticSearchErrorMetrics() {
 	go c.CountMetric(Outputs, 1, []string{"output:elasticsearch", "status:error"})
 	c.Stats.Elasticsearch.Add(Error, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "elasticsearch", "status": Error}).Inc()
+}
+
+func (c *Client) WatchElasticsearchPostAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	fmt.Println("discord running")
+	for AlertRunning {
+		select {
+		case resp := <-conn:
+			fmt.Println("response \n", resp)
+			c.ElasticsearchPost(resp)
+		}
+	}
+	fmt.Println("discord stopped")
+	return nil
+}
+
+func (c *Client) WatchElasticsearchPostLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.ElasticsearchPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

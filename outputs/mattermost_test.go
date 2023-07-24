@@ -13,14 +13,14 @@ import (
 func TestMattermostPayload(t *testing.T) {
 	expectedOutput := slackPayload{
 		Text:     "Rule: Test rule Priority: Debug",
-		Username: "Falcosidekick",
-		IconURL:  "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick.png",
+		Username: "Kubearmor",
+		IconURL:  "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991",
 		Attachments: []slackAttachment{
 			{
-				Fallback: "This is a test from falcosidekick",
+				Fallback: "This is a test from Kubearmor",
 				Color:    "#ccfff2",
-				Text:     "This is a test from falcosidekick",
-				Footer:   "https://github.com/falcosecurity/falcosidekick",
+				Text:     "This is a test from kubearmor",
+				Footer:   "https://github.com/kubearmor/kubearmor",
 				Fields: []slackAttachmentField{
 					{
 						Title: "rule",
@@ -49,7 +49,7 @@ func TestMattermostPayload(t *testing.T) {
 					},
 					{
 						Title: "proc.name",
-						Value: "falcosidekick",
+						Value: "kubearmor",
 						Short: true,
 					},
 					{
@@ -62,12 +62,12 @@ func TestMattermostPayload(t *testing.T) {
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	config := &types.Configuration{
 		Mattermost: types.MattermostOutputConfig{
-			Username: "Falcosidekick",
-			Icon:     "https://raw.githubusercontent.com/falcosecurity/falcosidekick/master/imgs/falcosidekick.png",
+			Username: "Kubearmor",
+			Icon:     "https://github.com/kubearmor/KubeArmor/assets/47106543/2db0b636-5c82-49c0-bf7d-535e4ad0a991",
 		},
 	}
 

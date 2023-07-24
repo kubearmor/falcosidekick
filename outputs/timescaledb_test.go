@@ -20,17 +20,17 @@ func TestNewTimescaleDBPayload(t *testing.T) {
 		"rule":             "Test rule",
 		"priority":         "Debug",
 		"source":           "syscalls",
-		"output":           "This is a test from falcosidekick",
+		"output":           "This is a test from kubearmor",
 		"tags":             "test,example",
 		"hostname":         "test-host",
 		"custom_field_1":   "test-custom-value-1",
-		"template_field_1": "falcosidekick",
+		"template_field_1": "kubearmor",
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	f.OutputFields["custom_field_1"] = "test-custom-value-1"
-	f.OutputFields["template_field_1"] = "falcosidekick"
+	f.OutputFields["template_field_1"] = "kubearmor"
 
 	config := &types.Configuration{
 		Customfields: map[string]string{

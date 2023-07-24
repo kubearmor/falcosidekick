@@ -224,12 +224,12 @@ func certsetup(config *types.Configuration) (serverTLSConf *tls.Config, err erro
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
-			Organization:  []string{"Falco"},
-			Country:       []string{"US"},
+			Organization:  []string{"Kubearmor"},
+			Country:       []string{"Bharat"},
 			Province:      []string{""},
-			Locality:      []string{"San Francisco"},
-			StreetAddress: []string{"Falco st"},
-			PostalCode:    []string{"2015"},
+			Locality:      []string{"New Delhi"},
+			StreetAddress: []string{"Kubearmor nagar"},
+			PostalCode:    []string{"110074"},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),

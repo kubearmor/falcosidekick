@@ -16,7 +16,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	pb "github.com/kubearmor/KubeArmor/protobuf"
 
@@ -92,49 +91,6 @@ const MutualTLSCacertFilename = "/ca.crt"
 const HttpPost = "POST"
 const HttpPut = "PUT"
 
-// LogBufferChannel store incoming data from log stream in buffer
-var LogBufferChannel chan *pb.Log
-
-// MsgBufferChannel store incoming data from Alert stream in buffer
-var MsgBufferChannel chan *pb.Message
-
-// AlertBufferChannel store incoming data from msg stream in buffer
-var AlertBufferChannel chan *pb.Alert
-
-type MsgStruct struct {
-	Filter    string
-	Broadcast chan *pb.Message
-}
-
-// MsgStructs Map
-var MsgStructs map[string]MsgStruct
-
-// MsgLock Lock
-var MsgLock *sync.RWMutex
-
-// AlertStruct Structure
-type AlertStruct struct {
-	Broadcast chan types.KubearmorPayload
-}
-
-// AlertStructs Map
-var AlertStructs map[string]AlertStruct
-
-// AlertLock Lock
-var AlertLock *sync.RWMutex
-
-// LogStruct Structure
-type LogStruct struct {
-	Filter    string
-	Broadcast chan types.KubearmorPayload
-}
-
-// LogStructs Map
-var LogStructs map[string]LogStruct
-
-// LogLock Lock
-var LogLock *sync.RWMutex
-
 // Headers to add to the client before sending the request
 type Header struct {
 	Key   string
@@ -172,10 +128,7 @@ type Client struct {
 	RedisClient       *redis.Client
 
 	// connection
-	conn *grpc.ClientConn
-
-	// client
-	client pb.LogServiceClient
+	Conn *grpc.ClientConn
 
 	// alerts
 	AlertStream pb.LogService_WatchAlertsClient
@@ -185,132 +138,10 @@ type Client struct {
 
 	// wait group
 	WgServer sync.WaitGroup
-}
 
-func (c *Client) WatchAlerts() error {
-
-	defer c.WgServer.Done()
-
-	var err error
-
-	for {
-		var res *pb.Alert
-
-		if res, err = c.AlertStream.Recv(); err != nil {
-			break
-		}
-
-		select {
-		case AlertBufferChannel <- res:
-		default:
-		}
-
-	}
-
-	return nil
-}
-
-// AddAlertFromBuffChan Adds ALert from AlertBufferChannel into AlertStructs
-func (c *Client) AddAlertFromBuffChan() {
-	Running := true
-	for Running {
-		select {
-		case res := <-AlertBufferChannel:
-			alert := types.KubearmorPayload{}
-
-			if err := Clone(*res, &alert); err != nil {
-				fmt.Println("Failed to clone an alert (%v)", *res)
-				continue
-			}
-
-			AlertLock.RLock()
-			for uid := range AlertStructs {
-				select {
-				case AlertStructs[uid].Broadcast <- (alert):
-				default:
-				}
-			}
-			AlertLock.RUnlock()
-
-		default:
-			time.Sleep(time.Millisecond * 10)
-		}
-
-	}
-}
-
-// WatchLogs Function
-func (c *Client) WatchLogs() error {
-
-	defer c.WgServer.Done()
-
-	var err error
-
-	for {
-		var res *pb.Log
-
-		if res, err = c.LogStream.Recv(); err != nil {
-			break
-		}
-
-		select {
-		case LogBufferChannel <- res:
-		default:
-			//not able to add it to Log buffer
-		}
-	}
-
-	return nil
-}
-
-// AddLogFromBuffChan Adds Log from LogBufferChannel into LogStructs
-func (c *Client) AddLogFromBuffChan() {
-
-	Running := true
-	for Running {
-		select {
-		case res := <-LogBufferChannel:
-			log := types.KubearmorPayload{}
-			if err := Clone(*res, &log); err != nil {
-				fmt.Println("Failed to clone a log (%v)", *res)
-
-			}
-			for uid := range LogStructs {
-				select {
-				case LogStructs[uid].Broadcast <- (log):
-				default:
-				}
-			}
-		default:
-			time.Sleep(time.Millisecond * 10)
-		}
-
-	}
-}
-
-func Clone(src, dst interface{}) error {
-	arr, _ := json.Marshal(src)
-	return json.Unmarshal(arr, dst)
-}
-
-func addAlertStruct(uid string, conn chan types.KubearmorPayload) {
-	AlertLock.Lock()
-	defer AlertLock.Unlock()
-
-	alertStruct := AlertStruct{}
-	alertStruct.Broadcast = conn
-
-	AlertStructs[uid] = alertStruct
-
-	fmt.Printf("Added a new client (%s, %s) for WatchAlerts", uid)
-}
-func removeAlertStruct(uid string) {
-	AlertLock.Lock()
-	defer AlertLock.Unlock()
-
-	delete(AlertStructs, uid)
-
-	fmt.Printf("Deleted the client (%s) for WatchAlerts", uid)
+	GetLogs bool
+	//
+	Running bool
 }
 
 // NewClient returns a new output.Client for accessing the different API.

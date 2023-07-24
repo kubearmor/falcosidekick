@@ -23,7 +23,7 @@ func markdownV2EscapeText(text interface{}) string {
 }
 
 var (
-	telegramMarkdownV2Tmpl = `*\[Falco\] \[{{markdownV2EscapeText .Priority }}\] {{markdownV2EscapeText .Rule }}*
+	telegramMarkdownV2Tmpl = `*\[Kubearmor\] \[{{markdownV2EscapeText .Priority }}\] {{markdownV2EscapeText .Rule }}*
 
 • *Time*: {{markdownV2EscapeText .Time }}
 • *Source*: {{markdownV2EscapeText .Source }}
@@ -45,7 +45,7 @@ type telegramPayload struct {
 	ChatID                string `json:"chat_id,omitempty"`
 }
 
-func newTelegramPayload(falcopayload types.FalcoPayload, config *types.Configuration) telegramPayload {
+func newTelegramPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) telegramPayload {
 	payload := telegramPayload{
 
 		ParseMode:             "MarkdownV2",
@@ -59,7 +59,7 @@ func newTelegramPayload(falcopayload types.FalcoPayload, config *types.Configura
 		"markdownV2EscapeText": markdownV2EscapeText,
 	}
 	ttmpl, _ := textTemplate.New("telegram").Funcs(funcs).Parse(telegramMarkdownV2Tmpl)
-	err := ttmpl.Execute(&textBuffer, falcopayload)
+	err := ttmpl.Execute(&textBuffer, kubearmorpayload)
 	if err != nil {
 		log.Printf("[ERROR] : Telegram - %v\n", err)
 		return payload
@@ -70,10 +70,10 @@ func newTelegramPayload(falcopayload types.FalcoPayload, config *types.Configura
 }
 
 // TelegramPost posts event to Telegram
-func (c *Client) TelegramPost(falcopayload types.FalcoPayload) {
+func (c *Client) TelegramPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Telegram.Add(Total, 1)
 
-	err := c.Post(newTelegramPayload(falcopayload, c.Config))
+	err := c.Post(newTelegramPayload(kubearmorpayload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:telegram", "status:error"})
 		c.Stats.Telegram.Add(Error, 1)

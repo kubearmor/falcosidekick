@@ -13,14 +13,14 @@ import (
 func TestNewSlackPayload(t *testing.T) {
 	expectedOutput := slackPayload{
 		Text:     "Rule: Test rule Priority: Debug",
-		Username: "Falcosidekick",
+		Username: "Kubearmor",
 		IconURL:  DefaultIconURL,
 		Attachments: []slackAttachment{
 			{
-				Fallback: "This is a test from falcosidekick",
+				Fallback: "This is a test from kubearmor",
 				Color:    PaleCyan,
-				Text:     "This is a test from falcosidekick",
-				Footer:   "https://github.com/falcosecurity/falcosidekick",
+				Text:     "This is a test from kubearmor",
+				Footer:   "https://github.com/kubearmor/kubearmor",
 				Fields: []slackAttachmentField{
 					{
 						Title: "rule",
@@ -49,7 +49,7 @@ func TestNewSlackPayload(t *testing.T) {
 					},
 					{
 						Title: "proc.name",
-						Value: "falcosidekick",
+						Value: "kubearmor",
 						Short: true,
 					},
 					{
@@ -62,11 +62,11 @@ func TestNewSlackPayload(t *testing.T) {
 		},
 	}
 
-	var f types.FalcoPayload
+	var f types.KubearmorPayload
 	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
 	config := &types.Configuration{
 		Slack: types.SlackOutputConfig{
-			Username: "Falcosidekick",
+			Username: "Kubearmor",
 			Icon:     DefaultIconURL,
 		},
 	}

@@ -40,16 +40,16 @@ type gotifyPayload struct {
 	Extras   map[string]map[string]string `json:"extras"`
 }
 
-func newGotifyPayload(falcopayload types.FalcoPayload, config *types.Configuration) gotifyPayload {
+func newGotifyPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) gotifyPayload {
 	g := gotifyPayload{
-		Title:    "[Falco] [" + falcopayload.Priority.String() + "] " + falcopayload.Rule,
-		Priority: int(types.Priority(falcopayload.Priority.String())),
+		Title:    "[Kubearmor] [" + kubearmorpayload.EventType + "] ",
+		Priority: int(types.Priority(kubearmorpayload.EventType)),
 		Extras: map[string]map[string]string{
 			"client::display": {
 				"contentType": "text/markdown",
 			},
 		},
-		Message: falcopayload.Output,
+		//Message: kubearmorpayload.Output,
 	}
 
 	var ttmpl *textTemplate.Template
@@ -61,14 +61,14 @@ func newGotifyPayload(falcopayload types.FalcoPayload, config *types.Configurati
 	case Plaintext, Text:
 		format = "plaintext"
 		ttmpl, _ = textTemplate.New("gotify").Parse(gotifyTextTmpl)
-		err = ttmpl.Execute(&outtext, falcopayload)
+		err = ttmpl.Execute(&outtext, kubearmorpayload)
 	case JSON:
 		format = "plaintext"
-		messageBytes, err = json.Marshal(falcopayload)
+		messageBytes, err = json.Marshal(kubearmorpayload)
 	default:
 		format = "markdown"
 		ttmpl, _ = textTemplate.New("gotify").Parse(gotifyMarkdownTmpl)
-		err = ttmpl.Execute(&outtext, falcopayload)
+		err = ttmpl.Execute(&outtext, kubearmorpayload)
 	}
 	if err != nil {
 		log.Printf("[ERROR] : Gotify - %v\n", err)
@@ -88,7 +88,7 @@ func newGotifyPayload(falcopayload types.FalcoPayload, config *types.Configurati
 }
 
 // GotifyPost posts event to Gotify
-func (c *Client) GotifyPost(falcopayload types.FalcoPayload) {
+func (c *Client) GotifyPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Gotify.Add(Total, 1)
 
 	if c.Config.Gotify.Token != "" {
@@ -97,7 +97,7 @@ func (c *Client) GotifyPost(falcopayload types.FalcoPayload) {
 		c.AddHeader("X-Gotify-Key", c.Config.Gotify.Token)
 	}
 
-	err := c.Post(newGotifyPayload(falcopayload, c.Config))
+	err := c.Post(newGotifyPayload(kubearmorpayload, c.Config))
 	if err != nil {
 		c.setGotifyErrorMetrics()
 		log.Printf("[ERROR] : Gotify - %v\n", err)

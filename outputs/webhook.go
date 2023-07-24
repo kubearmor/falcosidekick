@@ -8,7 +8,7 @@ import (
 )
 
 // WebhookPost posts event to an URL
-func (c *Client) WebhookPost(falcopayload types.FalcoPayload) {
+func (c *Client) WebhookPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Webhook.Add(Total, 1)
 
 	if len(c.Config.Webhook.CustomHeaders) != 0 {
@@ -20,9 +20,9 @@ func (c *Client) WebhookPost(falcopayload types.FalcoPayload) {
 	}
 	var err error
 	if strings.ToUpper(c.Config.Webhook.Method) == HttpPut {
-		err = c.Put(falcopayload)
+		err = c.Put(kubearmorpayload)
 	} else {
-		err = c.Post(falcopayload)
+		err = c.Post(kubearmorpayload)
 	}
 
 	if err != nil {

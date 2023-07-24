@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/segmentio/kafka-go/sasl/scram"
@@ -143,10 +144,10 @@ func NewKafkaClient(config *types.Configuration, stats *types.Statistics, promSt
 }
 
 // KafkaProduce sends a message to a Apach Kafka Topic
-func (c *Client) KafkaProduce(falcopayload types.FalcoPayload) {
+func (c *Client) KafkaProduce(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Kafka.Add(Total, 1)
 
-	falcoMsg, err := json.Marshal(falcopayload)
+	falcoMsg, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.incrKafkaErrorMetrics(1)
 		log.Printf("[ERROR] : Kafka - %v - %v\n", "failed to marshalling message", err.Error())
@@ -192,4 +193,47 @@ func (c *Client) incrKafkaErrorMetrics(add int) {
 	go c.CountMetric(Outputs, int64(add), []string{"output:kafka", "status:error"})
 	c.Stats.Kafka.Add(Error, int64(add))
 	c.PromStats.Outputs.With(map[string]string{"destination": "kafka", "status": Error}).Add(float64(add))
+}
+
+func (c *Client) WatchKafkaProduceAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	fmt.Println("discord running")
+	for AlertRunning {
+		select {
+		case resp := <-conn:
+			fmt.Println("response \n", resp)
+			c.KafkaProduce(resp)
+		}
+	}
+	fmt.Println("discord stopped")
+	return nil
+}
+
+func (c *Client) WatchKafkaProduceLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.KafkaProduce(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

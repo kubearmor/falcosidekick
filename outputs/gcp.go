@@ -106,10 +106,10 @@ func NewGCPClient(config *types.Configuration, stats *types.Statistics, promStat
 }
 
 // GCPCallCloudFunction calls the given Cloud Function
-func (c *Client) GCPCallCloudFunction(falcopayload types.FalcoPayload) {
+func (c *Client) GCPCallCloudFunction(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.GCPCloudFunctions.Add(Total, 1)
 
-	payload, _ := json.Marshal(falcopayload)
+	payload, _ := json.Marshal(kubearmorpayload)
 	data := string(payload)
 
 	result, err := c.GCPCloudFunctionsClient.CallFunction(context.Background(), &gcpfunctionspb.CallFunctionRequest{
@@ -133,10 +133,10 @@ func (c *Client) GCPCallCloudFunction(falcopayload types.FalcoPayload) {
 }
 
 // GCPPublishTopic sends a message to a GCP PubSub Topic
-func (c *Client) GCPPublishTopic(falcopayload types.FalcoPayload) {
+func (c *Client) GCPPublishTopic(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.GCPPubSub.Add(Total, 1)
 
-	payload, _ := json.Marshal(falcopayload)
+	payload, _ := json.Marshal(kubearmorpayload)
 	message := &pubsub.Message{
 		Data:       payload,
 		Attributes: c.Config.GCP.PubSub.CustomAttributes,
@@ -160,10 +160,10 @@ func (c *Client) GCPPublishTopic(falcopayload types.FalcoPayload) {
 }
 
 // UploadGCS upload payload to
-func (c *Client) UploadGCS(falcopayload types.FalcoPayload) {
+func (c *Client) UploadGCS(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.GCPStorage.Add(Total, 1)
 
-	payload, _ := json.Marshal(falcopayload)
+	payload, _ := json.Marshal(kubearmorpayload)
 
 	prefix := ""
 	t := time.Now()
