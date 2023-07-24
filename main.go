@@ -2,21 +2,14 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/embano1/memlog"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/falcosecurity/falcosidekick/outputs"
 	"github.com/falcosecurity/falcosidekick/types"
@@ -736,121 +729,7 @@ func init() {
 }
 
 func main() {
-	if config.Debug {
-		log.Printf("[INFO]  : Debug mode : %v", config.Debug)
-	}
-
-	routes := map[string]http.Handler{
-		"/":        http.HandlerFunc(mainHandler),
-		"/ping":    http.HandlerFunc(pingHandler),
-		"/healthz": http.HandlerFunc(healthHandler),
-		"/test":    http.HandlerFunc(testHandler),
-		"/metrics": promhttp.Handler(),
-	}
-
-	mainServeMux := http.NewServeMux()
-	var HTTPServeMux *http.ServeMux
-
-	// configure HTTP routes requested by NoTLSPath config
-	if config.TLSServer.Deploy {
-		HTTPServeMux = http.NewServeMux()
-		for _, r := range config.TLSServer.NoTLSPaths {
-			handler, ok := routes[r]
-			if ok {
-				delete(routes, r)
-				if config.Debug {
-					log.Printf("[DEBUG] : %s is served on http", r)
-				}
-				HTTPServeMux.Handle(r, handler)
-			} else {
-				log.Printf("[WARN] : tlsserver.notlspaths has unknown path '%s'", r)
-			}
-		}
-	}
-
-	// configure main server routes
-	for r, handler := range routes {
-		mainServeMux.Handle(r, handler)
-	}
-
-	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", config.ListenAddress, config.ListenPort),
-		Handler: mainServeMux,
-		// Timeouts
-		ReadTimeout:       60 * time.Second,
-		ReadHeaderTimeout: 60 * time.Second,
-		WriteTimeout:      60 * time.Second,
-		IdleTimeout:       60 * time.Second,
-	}
-
-	if config.TLSServer.Deploy {
-		if config.TLSServer.MutualTLS {
-			if config.Debug {
-				log.Printf("[DEBUG] : running mTLS server")
-			}
-
-			caCert, err := ioutil.ReadFile(config.TLSServer.CaCertFile)
-			if err != nil {
-				log.Printf("[ERROR] : %v\n", err.Error())
-			}
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
-
-			server.TLSConfig = &tls.Config{
-				ClientAuth: tls.RequireAndVerifyClientCert,
-				RootCAs:    caCertPool,
-				MinVersion: tls.VersionTLS12,
-			}
-		}
-
-		if config.Debug && !config.TLSServer.MutualTLS {
-			log.Printf("[DEBUG] : running TLS server")
-		}
-
-		if len(config.TLSServer.NoTLSPaths) != 0 {
-			if config.Debug {
-				log.Printf("[DEBUG] : running HTTP server for endpoints defined in tlsserver.notlspaths")
-			}
-
-			httpServer := &http.Server{
-				Addr:    fmt.Sprintf("%s:%d", config.ListenAddress, config.TLSServer.NoTLSPort),
-				Handler: HTTPServeMux,
-				// Timeouts
-				ReadTimeout:       60 * time.Second,
-				ReadHeaderTimeout: 60 * time.Second,
-				WriteTimeout:      60 * time.Second,
-				IdleTimeout:       60 * time.Second,
-			}
-			log.Printf("[INFO] : Falco Sidekick is up and listening on %s:%d and %s:%d", config.ListenAddress, config.ListenPort, config.ListenAddress, config.TLSServer.NoTLSPort)
-
-			errs := make(chan error, 1)
-			go serveTLS(server, errs)
-			go serveHTTP(httpServer, errs)
-			log.Fatal(<-errs)
-		} else {
-			log.Printf("[INFO] : Falco Sidekick is up and listening on %s:%d", config.ListenAddress, config.ListenPort)
-			if err := server.ListenAndServeTLS(config.TLSServer.CertFile, config.TLSServer.KeyFile); err != nil {
-				log.Fatalf("[ERROR] : %v", err.Error())
-			}
-		}
-	} else {
-		if config.Debug {
-			log.Printf("[DEBUG] : running HTTP server")
-		}
-
-		if config.TLSServer.MutualTLS {
-			log.Printf("[WARN] : tlsserver.deploy is false but tlsserver.mutualtls is true, change tlsserver.deploy to true to use mTLS")
-		}
-
-		if len(config.TLSServer.NoTLSPaths) != 0 {
-			log.Printf("[WARN] : tlsserver.deploy is false but tlsserver.notlspaths is not empty, change tlsserver.deploy to true to deploy two servers")
-		}
-
-		log.Printf("[INFO] : Falco Sidekick is up and listening on %s:%d", config.ListenAddress, config.ListenPort)
-		if err := server.ListenAndServe(); err != nil {
-			log.Fatalf("[ERROR] : %v", err.Error())
-		}
-	}
+	GetLogsFromKubearmorRelay()
 }
 
 func serveTLS(server *http.Server, errs chan<- error) {

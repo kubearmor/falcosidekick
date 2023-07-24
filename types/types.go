@@ -12,7 +12,7 @@ import (
 )
 
 // FalcoPayload is a struct to map falco event json
-type FalcoPayload struct {
+type KubearmorPayload struct {
 	UUID         string                 `json:"uuid,omitempty"`
 	Output       string                 `json:"output"`
 	Priority     PriorityType           `json:"priority"`
@@ -24,12 +24,12 @@ type FalcoPayload struct {
 	Hostname     string                 `json:"hostname,omitempty"`
 }
 
-func (f FalcoPayload) String() string {
+func (f KubearmorPayload) String() string {
 	j, _ := json.Marshal(f)
 	return string(j)
 }
 
-func (f FalcoPayload) Check() bool {
+func (f KubearmorPayload) Check() bool {
 	if f.Priority.String() == "" {
 		return false
 	}

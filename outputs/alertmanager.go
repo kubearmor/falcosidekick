@@ -27,7 +27,7 @@ var defaultSeverityMap = map[types.PriorityType]string{
 	types.Emergency:     "critical",
 }
 
-func newAlertmanagerPayload(falcopayload types.FalcoPayload, config *types.Configuration) []alertmanagerPayload {
+func newAlertmanagerPayload(falcopayload types.KubearmorPayload, config *types.Configuration) []alertmanagerPayload {
 	var amPayload alertmanagerPayload
 	amPayload.Labels = make(map[string]string)
 	amPayload.Annotations = make(map[string]string)
@@ -118,7 +118,7 @@ func newAlertmanagerPayload(falcopayload types.FalcoPayload, config *types.Confi
 }
 
 // AlertmanagerPost posts event to AlertManager
-func (c *Client) AlertmanagerPost(falcopayload types.FalcoPayload) {
+func (c *Client) AlertmanagerPost(falcopayload types.KubearmorPayload) {
 	c.Stats.Alertmanager.Add(Total, 1)
 
 	err := c.Post(newAlertmanagerPayload(falcopayload, c.Config))
@@ -133,4 +133,25 @@ func (c *Client) AlertmanagerPost(falcopayload types.FalcoPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:alertmanager", "status:ok"})
 	c.Stats.Alertmanager.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "alertmanager", "status": OK}).Inc()
+}
+
+func (c *Client) WatchAlertmanagerPostAlerts() error {
+	uid := "Alertmaneger"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	Running := true
+	for Running {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.AlertmanagerPost(resp)
+		}
+	}
+
+	return nil
 }

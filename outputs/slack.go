@@ -34,7 +34,7 @@ type slackPayload struct {
 	Attachments []slackAttachment `json:"attachments,omitempty"`
 }
 
-func newSlackPayload(falcopayload types.FalcoPayload, config *types.Configuration) slackPayload {
+func newSlackPayload(falcopayload types.KubearmorPayload, config *types.Configuration) slackPayload {
 	var (
 		messageText string
 		attachments []slackAttachment
@@ -142,7 +142,7 @@ func newSlackPayload(falcopayload types.FalcoPayload, config *types.Configuratio
 }
 
 // SlackPost posts event to Slack
-func (c *Client) SlackPost(falcopayload types.FalcoPayload) {
+func (c *Client) SlackPost(falcopayload types.KubearmorPayload) {
 	c.Stats.Slack.Add(Total, 1)
 
 	err := c.Post(newSlackPayload(falcopayload, c.Config))
@@ -158,4 +158,25 @@ func (c *Client) SlackPost(falcopayload types.FalcoPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:slack", "status:ok"})
 	c.Stats.Slack.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "slack", "status": OK}).Inc()
+}
+
+func (c *Client) WatchSlackAlerts() error {
+	uid := "slack"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	Running := true
+	for Running {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.SlackPost(resp)
+		}
+	}
+
+	return nil
 }
