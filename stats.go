@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/falcosecurity/falcosidekick/outputs"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/outputs"
+	"github.com/kubearmor/sidekick/types"
 )
 
 func getInitStats() *types.Statistics {

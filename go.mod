@@ -1,4 +1,4 @@
-module github.com/falcosecurity/falcosidekick
+module github.com/kubearmor/sidekick
 
 go 1.20
 

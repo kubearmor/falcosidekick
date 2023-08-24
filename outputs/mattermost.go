@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 func newMattermostPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) slackPayload {

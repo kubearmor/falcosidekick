@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/falcosecurity/falcosidekick/outputs"
-	"github.com/falcosecurity/falcosidekick/types"
 	pb "github.com/kubearmor/KubeArmor/protobuf"
+	"github.com/kubearmor/sidekick/outputs"
+	"github.com/kubearmor/sidekick/types"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

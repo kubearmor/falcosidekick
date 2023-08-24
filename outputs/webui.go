@@ -3,7 +3,7 @@ package outputs
 import (
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 type WebUIPayload struct {

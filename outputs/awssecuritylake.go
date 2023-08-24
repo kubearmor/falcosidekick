@@ -16,7 +16,7 @@ import (
 	"github.com/xitongsys/parquet-go-source/mem"
 	"github.com/xitongsys/parquet-go/writer"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 const (
@@ -213,7 +213,7 @@ func (c *Client) processNextBatch() error {
 			c.PromStats.Outputs.With(map[string]string{"destination": "awssecuritylake.", "status": Error}).Inc()
 			log.Printf("[ERROR] : %v SecurityLake - %v\n", c.OutputType, err)
 			// ctx currently not handled in main
-			// https://github.com/falcosecurity/falcosidekick/pull/390#discussion_r1081690326
+			// https://github.com/kubearmor/sidekick/pull/390#discussion_r1081690326
 			return err
 		}
 

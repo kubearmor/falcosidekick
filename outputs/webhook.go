@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // WebhookPost posts event to an URL

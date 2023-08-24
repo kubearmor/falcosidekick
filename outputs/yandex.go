@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // NewYandexClient returns a new output.Client for accessing the Yandex API.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 
 	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
 )

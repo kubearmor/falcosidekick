@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/falcosecurity/falcosidekick/types"
 	pb "github.com/kubearmor/KubeArmor/protobuf"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // Running bool

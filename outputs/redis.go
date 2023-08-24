@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 	"github.com/redis/go-redis/v9"
 )
 

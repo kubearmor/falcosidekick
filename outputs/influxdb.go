@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/falcosecurity/falcosidekick/types"
 	"github.com/google/uuid"
+	"github.com/kubearmor/sidekick/types"
 )
 
 type influxdbPayload string

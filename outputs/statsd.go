@@ -6,7 +6,7 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // NewStatsdClient returns a new output.Client for sending metrics to StatsD.

@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/embano1/memlog"
 
-	"github.com/falcosecurity/falcosidekick/outputs"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/outputs"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // Globale variables
@@ -719,12 +718,4 @@ func main() {
 	createReceiveBuffer()
 	GetLogsFromKubearmorRelay()
 
-}
-
-func serveTLS(server *http.Server, errs chan<- error) {
-	errs <- server.ListenAndServeTLS(config.TLSServer.CertFile, config.TLSServer.KeyFile)
-}
-
-func serveHTTP(server *http.Server, errs chan<- error) {
-	errs <- server.ListenAndServe()
 }

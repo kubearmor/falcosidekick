@@ -17,7 +17,7 @@ import (
 	smtp "github.com/emersion/go-smtp"
 	"github.com/google/uuid"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 const rfc2822 = "Mon Jan 02 15:04:05 -0700 2006"

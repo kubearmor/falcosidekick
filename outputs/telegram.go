@@ -7,7 +7,7 @@ import (
 	"strings"
 	textTemplate "text/template"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 func markdownV2EscapeText(text interface{}) string {

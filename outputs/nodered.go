@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // NodeRedPost posts event to Slack

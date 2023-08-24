@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/falcosecurity/falcosidekick/types"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kubearmor/sidekick/types"
 )
 
 type timescaledbPayload struct {

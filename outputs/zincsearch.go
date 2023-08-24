@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // ZincsearchPost posts event to Zincsearch
