@@ -8,6 +8,6 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o deimos .
+RUN go build -o sidekick .
 
-ENTRYPOINT ["./deimos"]
+ENTRYPOINT ["./sidekick"]

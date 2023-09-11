@@ -47,8 +47,8 @@ services:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=admin
       - DOCKER_INFLUXDB_INIT_PASSWORD=adminadmin
-      - DOCKER_INFLUXDB_INIT_ORG=falco
-      - DOCKER_INFLUXDB_INIT_BUCKET=falco
+      - DOCKER_INFLUXDB_INIT_ORG=kubearmor
+      - DOCKER_INFLUXDB_INIT_BUCKET=kubearmor
     ports:
       - "8086:8086"
     profiles: [influxdb]

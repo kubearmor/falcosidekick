@@ -1,4 +1,4 @@
-project_name: falcosidekick
+project_name: sidekick
 
 env:
   - GO111MODULE=on
@@ -26,7 +26,7 @@ sboms:
   - artifacts: archive
 
 builds:
-  - id: "falcosidekick"
+  - id: "sidekick"
     goos:
       - linux
     goarch:
@@ -45,7 +45,7 @@ builds:
       - -trimpath
     ldflags:
       - "{{ .Env.LDFLAGS }}"
-    binary: falcosidekick
+    binary: sidekick
 
 dockers:
   - goos: linux
@@ -53,10 +53,10 @@ dockers:
     dockerfile: Dockerfile
     use: buildx
     image_templates:
-      - "falcosecurity/falcosidekick:stable-amd64"
-      - "falcosecurity/falcosidekick:{{ .Version }}-amd64"
-      - "public.ecr.aws/falcosecurity/falcosidekick:stable-amd64"
-      - "public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-amd64"
+      - "kubearmor/sidekick:stable-amd64"
+      - "kubearmor/sidekick:{{ .Version }}-amd64"
+      - "public.ecr.aws/security/sidekick:stable-amd64"
+      - "public.ecr.aws/security/sidekick:{{ .Version }}-amd64"
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -72,10 +72,10 @@ dockers:
     dockerfile: Dockerfile
     use: buildx
     image_templates:
-      - "falcosecurity/falcosidekick:stable-arm64"
-      - "falcosecurity/falcosidekick:{{ .Version }}-arm64"
-      - "public.ecr.aws/falcosecurity/falcosidekick:stable-arm64"
-      - "public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-arm64"
+      - "kubearmor/sidekick:stable-arm64"
+      - "kubearmor/sidekick:{{ .Version }}-arm64"
+      - "public.ecr.aws/kubearmor/sidekick:stable-arm64"
+      - "public.ecr.aws/kubearmor/sidekick:{{ .Version }}-arm64"
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -92,10 +92,10 @@ dockers:
     dockerfile: Dockerfile
     use: buildx
     image_templates:
-      - "falcosecurity/falcosidekick:stable-armv7"
-      - "falcosecurity/falcosidekick:{{ .Version }}-armv7"
-      - "public.ecr.aws/falcosecurity/falcosidekick:stable-armv7"
-      - "public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-armv7"
+      - "kubearmor/sidekick:stable-armv7"
+      - "kubearmor/sidekick:{{ .Version }}-armv7"
+      - "public.ecr.aws/kubearmor/sidekick:stable-armv7"
+      - "public.ecr.aws/kubearmor/sidekick:{{ .Version }}-armv7"
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -107,29 +107,29 @@ dockers:
       - LICENSE
 
 docker_manifests:
-  - name_template: 'falcosecurity/falcosidekick:stable'
+  - name_template: 'kubearmor/sidekick:stable'
     image_templates:
-      - 'falcosecurity/falcosidekick:stable-amd64'
-      - 'falcosecurity/falcosidekick:stable-arm64'
-      - 'falcosecurity/falcosidekick:stable-armv7'
-  - name_template: 'falcosecurity/falcosidekick:{{ .Version }}'
+      - 'kubearmor/sidekick:stable-amd64'
+      - 'kubearmor/sidekick:stable-arm64'
+      - 'kubearmor/sidekick:stable-armv7'
+  - name_template: 'kubearmor/sidekick:{{ .Version }}'
     image_templates:
-      - 'falcosecurity/falcosidekick:{{ .Version }}-amd64'
-      - 'falcosecurity/falcosidekick:{{ .Version }}-arm64'
-      - 'falcosecurity/falcosidekick:{{ .Version }}-armv7'
-  - name_template: 'public.ecr.aws/falcosecurity/falcosidekick:stable'
+      - 'kubearmor/sidekick:{{ .Version }}-amd64'
+      - 'kubearmor/sidekick:{{ .Version }}-arm64'
+      - 'kubearmor/sidekick:{{ .Version }}-armv7'
+  - name_template: 'public.ecr.aws/kubearmor/sidekick:stable'
     image_templates:
-      - 'public.ecr.aws/falcosecurity/falcosidekick:stable-amd64'
-      - 'public.ecr.aws/falcosecurity/falcosidekick:stable-arm64'
-      - 'public.ecr.aws/falcosecurity/falcosidekick:stable-armv7'
-  - name_template: 'public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}'
+      - 'public.ecr.aws/kubearmor/sidekick:stable-amd64'
+      - 'public.ecr.aws/kubearmor/sidekick:stable-arm64'
+      - 'public.ecr.aws/kubearmor/sidekick:stable-armv7'
+  - name_template: 'public.ecr.aws/kubearmor/sidekick:{{ .Version }}'
     image_templates:
-      - 'public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-amd64'
-      - 'public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-arm64'
-      - 'public.ecr.aws/falcosecurity/falcosidekick:{{ .Version }}-armv7'
+      - 'public.ecr.aws/kubearmor/sidekick:{{ .Version }}-amd64'
+      - 'public.ecr.aws/kubearmor/sidekick:{{ .Version }}-arm64'
+      - 'public.ecr.aws/kubearmor/sidekick:{{ .Version }}-armv7'
 
 signs:
-  - id: falcosidekick
+  - id: sidekick
     signature: "${artifact}.sig"
     certificate: "${artifact}.pem"
     cmd: cosign
@@ -143,7 +143,7 @@ signs:
     artifacts: checksum
 
 docker_signs:
-  - id: falcosidekick
+  - id: sidekick
     cmd: cosign
     args: ["sign", "--recursive", "${artifact}"]
     artifacts: manifests
@@ -151,6 +151,6 @@ docker_signs:
 
 release:
   github:
-    owner: falcosecurity
-    name: falcosidekick
+    owner: kubearmor
+    name: sidekick
   prerelease: auto

@@ -80,7 +80,7 @@ const DefaultContentType = "application/json; charset=utf-8"
 const ContentTypeHeaderKey = "Content-Type"
 const UserAgentHeaderKey = "User-Agent"
 const AuthorizationHeaderKey = "Authorization"
-const UserAgentHeaderValue = "Falcosidekick"
+const UserAgentHeaderValue = "sidekick"
 
 // files names are static fo the shake of helm and single docker compatibility
 const MutualTLSClientCertFilename = "/client.crt"

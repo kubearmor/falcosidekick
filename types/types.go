@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// FalcoPayload is a struct to map falco event json
+// Payload is a struct to map kubearmor event json
 type KubearmorPayload struct {
 	Timestamp    int64                  ` json:"Timestamp,omitempty"`
 	UpdatedTime  string                 ` json:"UpdatedTime,omitempty"`

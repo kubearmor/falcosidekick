@@ -165,10 +165,11 @@ func (c *Client) WatchLogs() error {
 
 	var err error
 
-	for {
+	for LogRunning {
 		var res *pb.Log
 
 		if res, err = c.LogStream.Recv(); err != nil {
+			fmt.Println("Error streamsing logs err: ", err)
 			break
 		}
 
