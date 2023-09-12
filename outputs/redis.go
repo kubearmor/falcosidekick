@@ -3,10 +3,13 @@ package outputs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/google/uuid"
 	"github.com/kubearmor/sidekick/types"
 	"github.com/redis/go-redis/v9"
 )
@@ -64,4 +67,47 @@ func (c *Client) RedisPost(kubearmorpayload types.KubearmorPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:redis", "status:ok"})
 	c.Stats.Redis.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "redis", "status": OK}).Inc()
+}
+
+func (c *Client) WatchRedisPostAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	fmt.Println("discord running")
+	for AlertRunning {
+		select {
+		case resp := <-conn:
+			fmt.Println("response \n", resp)
+			c.RedisPost(resp)
+		}
+	}
+	fmt.Println("discord stopped")
+	return nil
+}
+
+func (c *Client) WatchRedisPostLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.RedisPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

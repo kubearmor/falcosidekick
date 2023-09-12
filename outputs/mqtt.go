@@ -2,7 +2,9 @@ package outputs
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -71,4 +73,47 @@ func (c *Client) MQTTPublish(kubearmorpayload types.KubearmorPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:mqtt", "status:ok"})
 	c.Stats.MQTT.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "mqtt", "status": OK}).Inc()
+}
+
+func (c *Client) WatchMQTTPublishAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	fmt.Println("discord running")
+	for AlertRunning {
+		select {
+		case resp := <-conn:
+			fmt.Println("response \n", resp)
+			c.MQTTPublish(resp)
+		}
+	}
+	fmt.Println("discord stopped")
+	return nil
+}
+
+func (c *Client) WatchMQTTPublishLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.MQTTPublish(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

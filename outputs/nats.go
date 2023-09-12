@@ -5,7 +5,9 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	nats "github.com/nats-io/nats.go"
 
 	"github.com/kubearmor/sidekick/types"
@@ -51,4 +53,50 @@ func (c *Client) setNatsErrorMetrics() {
 	go c.CountMetric(Outputs, 1, []string{"output:nats", "status:error"})
 	c.Stats.Nats.Add(Error, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "nats", "status": Error}).Inc()
+}
+
+func (c *Client) WatchNatsPublishAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.NatsPublish(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchNatsPublishLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.NatsPublish(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

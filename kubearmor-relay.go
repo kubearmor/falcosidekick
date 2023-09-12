@@ -161,7 +161,8 @@ func createReceiveBuffer() {
 	}
 
 	if config.Rocketchat.WebhookURL != "" {
-		go rocketchatClient.RocketchatPost(KubearmorPayload)
+		go rocketchatClient.WatchRocketchatPostAlerts()
+		go rocketchatClient.WatchRocketchatPostLogs()
 	}
 
 	if config.Mattermost.WebhookURL != "" {
@@ -169,7 +170,8 @@ func createReceiveBuffer() {
 	}
 
 	if config.Teams.WebhookURL != "" {
-		go teamsClient.TeamsPost(KubearmorPayload)
+		go teamsClient.WatchTeamsPostAlerts()
+		go teamsClient.WatchTeamsPostLogs()
 	}
 
 	if config.Datadog.APIKey != "" {
@@ -203,7 +205,8 @@ func createReceiveBuffer() {
 	}
 
 	if config.Nats.HostPort != "" {
-		go natsClient.NatsPublish(KubearmorPayload)
+		go natsClient.WatchNatsPublishAlerts()
+		go natsClient.WatchNatsPublishLogs()
 	}
 
 	if config.Stan.HostPort != "" && config.Stan.ClusterID != "" && config.Stan.ClientID != "" {
@@ -327,7 +330,9 @@ func createReceiveBuffer() {
 	}
 
 	if config.Grafana.HostPort != "" {
-		go grafanaClient.GrafanaPost(KubearmorPayload)
+		go grafanaClient.WatchGrafanaPostAlerts()
+		go grafanaClient.WatchGrafanaPostLogs()
+
 	}
 
 	if config.GrafanaOnCall.WebhookURL != "" {
@@ -359,7 +364,8 @@ func createReceiveBuffer() {
 	}
 
 	if config.MQTT.Broker != "" {
-		go mqttClient.MQTTPublish(KubearmorPayload)
+		go mqttClient.WatchMQTTPublishAlerts()
+		go mqttClient.WatchMQTTPublishLogs()
 	}
 
 	if config.Zincsearch.HostPort != "" {
@@ -375,11 +381,13 @@ func createReceiveBuffer() {
 	}
 
 	if config.TimescaleDB.Host != "" {
-		go timescaleDBClient.TimescaleDBPost(KubearmorPayload)
+		go timescaleDBClient.WatchTimescaleDBPostAlerts()
+		go timescaleDBClient.WatchTimescaleDBPostLogs()
 	}
 
 	if config.Redis.Address != "" {
-		go redisClient.RedisPost(KubearmorPayload)
+		go redisClient.WatchRedisPostAlerts()
+		go redisClient.WatchRedisPostLogs()
 	}
 
 	if config.Telegram.ChatID != "" {

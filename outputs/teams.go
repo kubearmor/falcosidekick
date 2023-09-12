@@ -3,7 +3,9 @@ package outputs
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/kubearmor/sidekick/types"
 )
 
@@ -110,4 +112,50 @@ func (c *Client) TeamsPost(kubearmorpayload types.KubearmorPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:teams", "status:ok"})
 	c.Stats.Teams.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "teams", "status": OK}).Inc()
+}
+
+func (c *Client) WatchTeamsPostAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.TeamsPost(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchTeamsPostLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.TeamsPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }
