@@ -11,11 +11,3 @@ func TestKsp(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "intigration")
 }
-
-var _ = Describe("intigration", func() {
-
-	Describe("Match syscalls", func() {
-		It("can detect unlink syscall", func() {})
-	})
-
-})
