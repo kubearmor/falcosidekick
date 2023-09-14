@@ -32,6 +32,7 @@ func GetLogsFromKubearmorRelay() {
 		fmt.Println("Unable to Connect to Relay Server.|", err, "| Shutting down......")
 		os.Exit(1)
 	}
+
 	lc.Conn = conn
 	//create log and alert watcher
 	client := pb.NewLogServiceClient(conn)

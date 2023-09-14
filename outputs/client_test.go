@@ -25,7 +25,47 @@ import (
 	"github.com/kubearmor/sidekick/types"
 )
 
-var falcoTestInput = `{"output":"This is a test from falcosidekick","priority":"Debug","rule":"Test rule", "time":"2001-01-01T01:10:00Z","source":"syscalls","output_fields": {"proc.name":"falcosidekick", "proc.tty": 1234}, "tags":["test","example"], "hostname":"test-host"}`
+var TestInput = `
+{
+  "Timestamp": 1631542902,
+  "UpdatedTime": "2023-09-13T15:35:02Z",
+  "ClusterName": "default",
+  "HostName": "gke-kubearmor-prerelease-default-pool-6ad71e07-cd8r",
+  "EventType": "MatchedPolicy",
+  "Detail": {
+    "OwnerRef": "Deployment",
+    "OwnerName": "wordpress",
+    "OwnerNamespace": "wordpress-mysql",
+    "Timestamp": "1631542902",
+    "UpdatedTime": "2023-09-13T15:35:02Z",
+    "ClusterName": "default",
+    "Hostname": "gke-kubearmor-prerelease-default-pool-6ad71e07-cd8r",
+    "NamespaceName": "wordpress-mysql",
+    "PodName": "wordpress-7c966b5d85-xvsrl",
+    "Labels": "app=wordpress",
+    "ContainerID": "80eead8fb840e9f3f3b1bea94bb202a798b92ad8ba4e0c92f52c4027dab98e73",
+    "ContainerName": "wordpress",
+    "ContainerImage": "docker.io/library/wordpress:4.8-apache@sha256:6216f64ab88fc51d311e38c7f69ca3f9aaba621492b4f1fa93ddf63093768845",
+    "HostPPID": "102114",
+    "HostPID": "102947",
+    "PPID": "203",
+    "PID": "217",
+    "UID": "1001",
+    "ParentProcessName": "/bin/bash",
+    "ProcessName": "/bin/ls",
+    "Source": "/bin/ls",
+    "Operation": "File",
+    "Resource": "/var",
+    "Data": "syscall=SYS_OPENAT fd=-100 flags=O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC",
+    "Result": "Passed",
+    "PolicyName": "DefaultPosture",
+    "Severity": "Medium",
+    "Tags": "Tag1,Tag2",
+    "ATags": "ATag1,ATag2",
+    "Message": "Policy Matched",
+    "Enforcer": "eBPF Monitor"
+  }
+}`
 
 func TestNewClient(t *testing.T) {
 	u, _ := url.Parse("http://localhost")
@@ -174,10 +214,10 @@ func TestHeadersResetAfterReq(t *testing.T) {
 
 func TestMutualTlsPost(t *testing.T) {
 	config := &types.Configuration{}
-	config.MutualTLSFilesPath = "/tmp/falcosidekicktests/client"
-	config.MutualTLSClient.CertFile = "/tmp/falcosidekicktests/client/client.crt"
-	config.MutualTLSClient.KeyFile = "/tmp/falcosidekicktests/client/client.key"
-	config.MutualTLSClient.CaCertFile = "/tmp/falcosidekicktests/client/ca.crt"
+	config.MutualTLSFilesPath = "/tmp/kubearmor/client"
+	config.MutualTLSClient.CertFile = "/tmp/kubearmor/client/client.crt"
+	config.MutualTLSClient.KeyFile = "/tmp/kubearmor/client/client.key"
+	config.MutualTLSClient.CaCertFile = "/tmp/kubearmor/client/ca.crt"
 	// delete folder to avoid makedir failure
 	os.RemoveAll(config.MutualTLSFilesPath)
 

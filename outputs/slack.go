@@ -94,6 +94,7 @@ func newSlackPayload(kubearmorpayload types.KubearmorPayload, config *types.Conf
 		if config.Slack.Footer != "" {
 			attachment.Footer = config.Slack.Footer
 		}
+		attachment.Fields = fields
 	}
 
 	if config.Slack.MessageFormatTemplate != nil {

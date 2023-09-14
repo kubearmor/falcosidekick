@@ -1,0 +1,113 @@
+name: ci-test-ginkgo
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Auto-testing Framework
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "v1.20"
+
+      - name: Install the latest LLVM toolchain
+        run: curl -sfL https://raw.githubusercontent.com/kubearmor/KubeArmor/main/.github/workflows/install-llvm.sh
+
+      # - name: Setup a Kubernetes environment
+      #   run: curl -sfL https://raw.githubusercontent.com/kubearmor/KubeArmor/main/contribution/k3s/install_k3s.sh
+
+      - name: Setup k3s ${{ inputs.k3s-version }}${{ inputs.k3s-channel }}
+        run: |
+          echo "::group::Setup k3s ${{ inputs.k3s-version }}${{ inputs.k3s-channel }}"
+          if [[ "${{ inputs.metrics-enabled }}" != true ]]; then
+            k3s_disable_metrics="--disable metrics-server"
+          fi
+          if [[ "${{ inputs.traefik-enabled }}" != true ]]; then
+            k3s_disable_traefik="--disable traefik"
+          fi
+          if [[ "${{ inputs.docker-enabled }}" == true ]]; then
+            k3s_docker=--container-runtime-endpoint=/run/cri-dockerd.sock
+          fi
+          # We want to provide a new default value for the --egress-selector-mode
+          # flag to workaround the intermittent issue tracked here:
+          # https://github.com/k3s-io/k3s/issues/5633#issuecomment-1181424511.
+          #
+          if [[ "${{ inputs.extra-setup-args }}" != *--egress-selector-mode* ]]; then
+            # We check for k3s versions 1.22.10+, 1.23.7+, or 1.24.1+ or more
+            # recent where we know the --egress-selector-mode flag is defined.
+            # This includes when the version isn't specified or is specified as
+            # latest or stable.
+            #
+            # The verlte function was taken from this stackoverflow post:
+            # https://stackoverflow.com/a/4024263/2220152
+            #
+            verlte() {
+              [ "$1" = "`echo -e "$1\n$2" | sort -V | head -n1`" ]
+            }
+            # If a k3s channel is specified we append a patch version of 99 to it
+            # to ensure our verlte comparisons below functions as intended.
+            #
+            c=${{ inputs.k3s-channel }}
+            c=${c:+$c.99}
+            v=${{ inputs.k3s-version }}${c}
+            if ([[ "$v" != v* ]]) || ([[ "$v" == v1.22.* ]] && verlte "v1.22.10" "$v") || ([[ "$v" == v1.23.* ]] && verlte "v1.23.7" "$v") || (verlte "v1.24.1" "$v"); then
+              default_extra_setup_args=--egress-selector-mode=disabled
+            fi
+          fi
+          curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${{ inputs.k3s-version }}" INSTALL_K3S_CHANNEL="${{ inputs.k3s-channel }}" sh -s - \
+            ${k3s_disable_metrics} \
+            ${k3s_disable_traefik} \
+            --disable-network-policy \
+            --flannel-backend=none \
+            ${k3s_docker} \
+            ${{ inputs.extra-setup-args }} \
+            ${default_extra_setup_args}
+          echo "::endgroup::"
+        shell: bash
+
+    # By providing a kubeconfig owned by the current user with 600 permissions,
+    # kubectl becomes usable without sudo, and helm won't emit warnings about
+    # bloated access to group/world.
+      - name: Prepare a kubeconfig in ~/.kube/config
+        run: |
+          echo "::group::Prepare a kubeconfig in ~/.kube/config"
+          mkdir -p ~/.kube
+          sudo cat /etc/rancher/k3s/k3s.yaml > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          echo "::endgroup::"
+        shell: bash
+
+      - name: Install KubeArmor client
+        run: |
+          curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
+          sleep 10
+          karmor
+
+      - name: Add Helm Repository (if needed)
+        run: |
+          helm repo add kubearmor https://kubearmor.github.io/charts
+          helm repo update kubearmor
+      
+      - name: Deploy KubeArmorOperator Helm Chart
+        run: |
+          helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kube-system
+
+      - name: Install KubeArmor 
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/pkg/KubeArmorOperator/config/samples/sample-config.yml
+      
+      - name: Install deimos using Helm
+        run: |
+          helm install deimos ./helm/deimos/ --set config.syslog.host=syslog-server-service.default.svc.cluster.local --set config.syslog.port=514 --set config.syslog.format=cef --set config.syslog.protocol=udp --set config.policyreport.enabled=true -n kube-system
+

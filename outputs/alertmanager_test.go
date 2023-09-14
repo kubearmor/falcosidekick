@@ -2,6 +2,7 @@ package outputs
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -13,15 +14,58 @@ import (
 const defaultThresholds = `[{"priority":"critical", "value":10000}, {"priority":"critical", "value":1000}, {"priority":"critical", "value":100} ,{"priority":"warning", "value":10}, {"priority":"warning", "value":1}]`
 
 func TestNewAlertmanagerPayloadO(t *testing.T) {
-	expectedOutput := `[{"labels":{"proc_name":"falcosidekick","priority":"Debug","severity": "information","proc_tty":"1234","eventsource":"syscalls","hostname":"test-host","rule":"Test rule","source":"falco","tags":"test,example"},"annotations":{"info":"This is a test from falcosidekick","description":"This is a test from falcosidekick","summary":"Test rule"}}]`
+	fmt.Println("Running Alertmaneger tets")
+	expectedOutput := `
+	[
+		{
+			"Labels": {
+				"ATags": "ATag1,ATag2",
+				"ClusterName": "default",
+				"ContainerID": "80eead8fb840e9f3f3b1bea94bb202a798b92ad8ba4e0c92f52c4027dab98e73",
+				"ContainerImage": "docker.io/library/wordpress:4.8-apache@sha256:6216f64ab88fc51d311e38c7f69ca3f9aaba621492b4f1fa93ddf63093768845",
+				"ContainerName": "wordpress",
+				"Data": "syscall=SYS_OPENAT fd=-100 flags=O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC",
+				"Enforcer": "eBPF Monitor",
+				"HostPID": "102947",
+				"HostPPID": "102114",
+				"Hostname": "gke-kubearmor-prerelease-default-pool-6ad71e07-cd8r",
+				"Labels": "app=wordpress",
+				"Message": "Policy Matched",
+				"NamespaceName": "wordpress-mysql",
+				"Operation": "File",
+				"OwnerName": "wordpress",
+				"OwnerNamespace": "wordpress-mysql",
+				"OwnerRef": "Deployment",
+				"PID": "217",
+				"PPID": "203",
+				"ParentProcessName": "/bin/bash",
+				"PodName": "wordpress-7c966b5d85-xvsrl",
+				"PolicyName": "DefaultPosture",
+				"ProcessName": "/bin/ls",
+				"Resource": "/var",
+				"Result": "Passed",
+				"Severity": "Medium",
+				"Source": "/bin/ls",
+				"Tags": "Tag1,Tag2",
+				"Timestamp": "1631542902",
+				"UID": "1001",
+				"UpdatedTime": "2023-09-13T15:35:02Z",
+				"source": "Kubearmor"
+			},
+			"Annotations": null,
+			"EndsAt": "0001-01-01T00:00:00Z"
+		}
+	]
+	`
+
 	var f types.KubearmorPayload
-	d := json.NewDecoder(strings.NewReader(falcoTestInput))
+	d := json.NewDecoder(strings.NewReader(TestInput))
 	d.UseNumber()
 	err := d.Decode(&f) //have to decode it the way newkubearmorpayload does
 	require.Nil(t, err)
 
 	config := &types.Configuration{
-		Alertmanager: types.AlertmanagerOutputConfig{DropEventDefaultPriority: Critical},
+		Log: false,
 	}
 	json.Unmarshal([]byte(defaultThresholds), &config.Alertmanager.DropEventThresholdsList)
 
@@ -31,30 +75,6 @@ func TestNewAlertmanagerPayloadO(t *testing.T) {
 	var o1, o2 []alertmanagerPayload
 	require.Nil(t, json.Unmarshal([]byte(expectedOutput), &o1))
 	require.Nil(t, json.Unmarshal(s, &o2))
-
-	require.Equal(t, o1, o2)
-}
-
-func TestNewAlertmanagerPayloadDropEvent(t *testing.T) {
-	input := `{"hostname":"host","output":"Falco internal: syscall event drop. 815508 system calls dropped in last second.","output_fields":{"ebpf_enabled":"1","n_drops":"815508","n_drops_buffer_clone_fork_enter":"0","n_drops_buffer_clone_fork_exit":"0","n_drops_buffer_connect_enter":"0","n_drops_buffer_connect_exit":"0","n_drops_buffer_dir_file_enter":"803","n_drops_buffer_dir_file_exit":"804","n_drops_buffer_execve_enter":"0","n_drops_buffer_execve_exit":"0","n_drops_buffer_open_enter":"798","n_drops_buffer_open_exit":"798","n_drops_buffer_other_interest_enter":"0","n_drops_buffer_other_interest_exit":"0","n_drops_buffer_total":"815508","n_drops_bug":"0","n_drops_page_faults":"0","n_drops_scratch_map":"0","n_evts":"2270350"},"priority":"Debug","rule":"Falco internal: syscall event drop","time":"2023-03-03T03:03:03.000000003Z"}`
-	expectedOutput := `[{"labels":{"ebpf_enabled":"1","eventsource":"","hostname":"host","n_drops":">10000","n_drops_buffer_clone_fork_enter":"0","n_drops_buffer_clone_fork_exit":"0","n_drops_buffer_connect_enter":"0","n_drops_buffer_connect_exit":"0","n_drops_buffer_dir_file_enter":">100","n_drops_buffer_dir_file_exit":">100","n_drops_buffer_execve_enter":"0","n_drops_buffer_execve_exit":"0","n_drops_buffer_open_enter":">100","n_drops_buffer_open_exit":">100","n_drops_buffer_other_interest_enter":"0","n_drops_buffer_other_interest_exit":"0","n_drops_buffer_total":">10000","n_drops_bug":"0","n_drops_page_faults":"0","n_drops_scratch_map":"0","priority":"Critical","rule":"Falco internal: syscall event drop","severity":"critical","source":"falco"},"annotations":{"description":"Falco internal: syscall event drop. 815508 system calls dropped in last second.","info":"Falco internal: syscall event drop. 815508 system calls dropped in last second.","summary":"Falco internal: syscall event drop"},"endsAt":"0001-01-01T00:00:00Z"}]`
-	var f types.KubearmorPayload
-	d := json.NewDecoder(strings.NewReader(input))
-	d.UseNumber()
-	err := d.Decode(&f) //have to decode it the way newkubearmorpayload does
-	require.Nil(t, err)
-
-	config := &types.Configuration{
-		Alertmanager: types.AlertmanagerOutputConfig{DropEventDefaultPriority: Critical},
-	}
-	json.Unmarshal([]byte(defaultThresholds), &config.Alertmanager.DropEventThresholdsList)
-
-	s, err := json.Marshal(newAlertmanagerPayload(f, config))
-	require.Nil(t, err)
-
-	var o1, o2 []alertmanagerPayload
-	require.Nil(t, json.Unmarshal([]byte(expectedOutput), &o1))
-	require.Nil(t, json.Unmarshal(s, &o2))
-
+	fmt.Println(o2)
 	require.Equal(t, o1, o2)
 }
