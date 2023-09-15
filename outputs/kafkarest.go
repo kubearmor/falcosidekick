@@ -32,7 +32,7 @@ func (c *Client) KafkaRestPost(kubearmorpayload types.KubearmorPayload) {
 	default:
 		version = 2
 	}
-	falcoMsg, err := json.Marshal(kubearmorpayload)
+	Msg, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.Stats.KafkaRest.Add(Error, 1)
 		c.PromStats.Outputs.With(map[string]string{"destination": "kafkarest", "status": Error}).Inc()
@@ -44,7 +44,7 @@ func (c *Client) KafkaRestPost(kubearmorpayload types.KubearmorPayload) {
 
 	payload := KafkaRestPayload{
 		Records: []Records{{
-			Value: base64.StdEncoding.EncodeToString(falcoMsg),
+			Value: base64.StdEncoding.EncodeToString(Msg),
 		}},
 	}
 

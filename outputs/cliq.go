@@ -16,7 +16,7 @@ import (
 const (
 	tableSlideType = "table"
 	textSlideType  = "text"
-	botName        = "Falco Sidekick"
+	botName        = "Sidekick"
 )
 
 // Table slide fields

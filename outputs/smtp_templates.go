@@ -34,7 +34,7 @@ var htmlTmpl = `
 <table cellpadding="3" cellspacing="0" style="font-family:arial,helvetica,sans-serif; height:2px; width:700px;">
     <tbody>
         <tr>
-            <td><img src="https://raw.githubusercontent.com/cncf/artwork/master/projects/falco/horizontal/color/falco-horizontal-color.png" width="117px" height="47"></td>
+            <td><img src="" width="117px" height="47"></td>
             <td></td>
         </tr>
     </tbody>

@@ -308,11 +308,11 @@ func certsetup(config *types.Configuration) (serverTLSConf *tls.Config, err erro
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
-			Organization:  []string{"Falco"},
+			Organization:  []string{"Accuknox"},
 			Country:       []string{"US"},
 			Province:      []string{""},
 			Locality:      []string{"San Francisco"},
-			StreetAddress: []string{"Falcosidekick st"},
+			StreetAddress: []string{"sidekick st"},
 			PostalCode:    []string{"94016"},
 		},
 		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
@@ -366,11 +366,11 @@ func certsetup(config *types.Configuration) (serverTLSConf *tls.Config, err erro
 	clientCert := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
-			Organization:  []string{"Falcosidekick"},
+			Organization:  []string{"sidekick"},
 			Country:       []string{"US"},
 			Province:      []string{""},
 			Locality:      []string{"San Francisco"},
-			StreetAddress: []string{"Falcosidekickclient st"},
+			StreetAddress: []string{"sidekickclient st"},
 			PostalCode:    []string{"94016"},
 		},
 		NotBefore:    time.Now(),

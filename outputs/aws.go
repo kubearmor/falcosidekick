@@ -279,7 +279,7 @@ func (c *Client) SendCloudWatchLog(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.AWSCloudWatchLogs.Add(Total, 1)
 
 	if c.Config.AWS.CloudWatchLogs.LogStream == "" {
-		streamName := "falcosidekick-logstream"
+		streamName := "sidekick-logstream"
 		log.Printf("[INFO]  : %v CloudWatchLogs - Log Stream not configured creating one called %s\n", c.OutputType, streamName)
 		inputLogStream := &cloudwatchlogs.CreateLogStreamInput{
 			LogGroupName:  aws.String(c.Config.AWS.CloudWatchLogs.LogGroup),

@@ -147,7 +147,7 @@ func NewKafkaClient(config *types.Configuration, stats *types.Statistics, promSt
 func (c *Client) KafkaProduce(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Kafka.Add(Total, 1)
 
-	falcoMsg, err := json.Marshal(kubearmorpayload)
+	Msg, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.incrKafkaErrorMetrics(1)
 		log.Printf("[ERROR] : Kafka - %v - %v\n", "failed to marshalling message", err.Error())
@@ -155,7 +155,7 @@ func (c *Client) KafkaProduce(kubearmorpayload types.KubearmorPayload) {
 	}
 
 	kafkaMsg := kafka.Message{
-		Value: falcoMsg,
+		Value: Msg,
 	}
 
 	// Errors are logged/captured via handleKafkaCompletion function, ignore here

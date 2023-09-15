@@ -67,8 +67,8 @@ var (
 		},
 	}
 
-	falcosidekickNamespace    string
-	falcosidekickNamespaceUID k8stypes.UID
+	sidekickNamespace    string
+	sidekickNamespaceUID k8stypes.UID
 
 	// used resources in the k8saudit ruleset
 	resourceMapping = map[string]resource{
@@ -109,15 +109,15 @@ func NewPolicyReportClient(config *types.Configuration, stats *types.Statistics,
 		return nil, err
 	}
 
-	falcosidekickNamespace = os.Getenv("NAMESPACE")
-	if falcosidekickNamespace == "" {
+	sidekickNamespace = os.Getenv("NAMESPACE")
+	if sidekickNamespace == "" {
 		log.Println("[INFO]  : PolicyReport - No env var NAMESPACE detected")
 	} else {
-		n, err := clientset.CoreV1().Namespaces().Get(context.TODO(), falcosidekickNamespace, metav1.GetOptions{})
+		n, err := clientset.CoreV1().Namespaces().Get(context.TODO(), sidekickNamespace, metav1.GetOptions{})
 		if err != nil {
-			log.Printf("[ERROR] : PolicyReport - Can't get UID of namespace %v: %v\n", falcosidekickNamespace, err)
+			log.Printf("[ERROR] : PolicyReport - Can't get UID of namespace %v: %v\n", sidekickNamespace, err)
 		} else {
-			falcosidekickNamespaceUID = n.ObjectMeta.UID
+			sidekickNamespaceUID = n.ObjectMeta.UID
 		}
 	}
 
@@ -133,10 +133,10 @@ func NewPolicyReportClient(config *types.Configuration, stats *types.Statistics,
 }
 
 // UpdateOrCreatePolicyReport creates/updates PolicyReport/ClusterPolicyReport Resource in Kubernetes
-func (c *Client) UpdateOrCreatePolicyReport(falcopayload types.KubearmorPayload) {
+func (c *Client) UpdateOrCreatePolicyReport(payload types.KubearmorPayload) {
 	c.Stats.PolicyReport.Add(Total, 1)
 
-	event, namespace := newResult(falcopayload)
+	event, namespace := newResult(payload)
 
 	var err error
 	if namespace != "" {
@@ -224,13 +224,13 @@ func updatePolicyReports(c *Client, namespace string, event *wgpolicy.PolicyRepo
 				Warn: 0,
 			},
 		}
-		if falcosidekickNamespace != "" && falcosidekickNamespaceUID != "" {
+		if sidekickNamespace != "" && sidekickNamespaceUID != "" {
 			policyReports[namespace].ObjectMeta.OwnerReferences = []metav1.OwnerReference{
 				{
 					APIVersion: "v1",
 					Kind:       "Namespace",
-					Name:       falcosidekickNamespace,
-					UID:        falcosidekickNamespaceUID,
+					Name:       sidekickNamespace,
+					UID:        sidekickNamespaceUID,
 					Controller: new(bool),
 				},
 			}

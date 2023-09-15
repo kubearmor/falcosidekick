@@ -29,8 +29,8 @@ func (c *Client) CloudEventsSend(kubearmorpayload types.KubearmorPayload) {
 
 	event := cloudevents.NewEvent()
 	event.SetTime(time.Unix(kubearmorpayload.Timestamp, 0))
-	event.SetSource("falco.org") // TODO: this should have some info on the falco server that made the event.
-	event.SetType("falco.rule.output.v1")
+	event.SetSource("https://kubearmor.io/") // TODO: this should have some info on the server that made the event.
+	event.SetType("kubearmor.rule.output.v1")
 	event.SetExtension("priority", kubearmorpayload.EventType)
 	if kubearmorpayload.Hostname != "" {
 		event.SetExtension(Hostname, kubearmorpayload.Hostname)
