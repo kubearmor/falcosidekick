@@ -2,13 +2,15 @@ package outputs
 
 import (
 	"bytes"
+	"fmt"
 	"log"
-	"strings"
+	"time"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/google/uuid"
+	"github.com/kubearmor/sidekick/types"
 )
 
-func newRocketchatPayload(falcopayload types.FalcoPayload, config *types.Configuration) slackPayload {
+func newRocketchatPayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) slackPayload {
 	var (
 		messageText string
 		attachments []slackAttachment
@@ -18,57 +20,55 @@ func newRocketchatPayload(falcopayload types.FalcoPayload, config *types.Configu
 	)
 
 	if config.Rocketchat.OutputFormat == All || config.Rocketchat.OutputFormat == Fields || config.Rocketchat.OutputFormat == "" {
-		field.Title = Rule
-		field.Value = falcopayload.Rule
-		field.Short = true
-		fields = append(fields, field)
 		field.Title = Priority
-		field.Value = falcopayload.Priority.String()
+		field.Value = kubearmorpayload.EventType
 		field.Short = true
 		fields = append(fields, field)
 		field.Title = Source
-		field.Value = falcopayload.Source
+		field.Value = kubearmorpayload.OutputFields["PodName"].(string)
 		field.Short = true
 		fields = append(fields, field)
-		if len(falcopayload.Tags) != 0 {
-			field.Title = Tags
-			field.Value = strings.Join(falcopayload.Tags, ", ")
-			field.Short = true
-			fields = append(fields, field)
-		}
 
-		for _, i := range getSortedStringKeys(falcopayload.OutputFields) {
-			field.Title = i
-			field.Value = falcopayload.OutputFields[i].(string)
-			if len([]rune(falcopayload.OutputFields[i].(string))) < 36 {
-				field.Short = true
-			} else {
-				field.Short = false
+		for _, i := range getSortedStringKeys(kubearmorpayload.OutputFields) {
+			j := kubearmorpayload.OutputFields[i]
+			switch v := j.(type) {
+			case string:
+				field.Title = i
+				field.Value = kubearmorpayload.OutputFields[i].(string)
+				if len([]rune(kubearmorpayload.OutputFields[i].(string))) < 36 {
+					field.Short = true
+				} else {
+					field.Short = false
+				}
+				fields = append(fields, field)
+			default:
+				vv := fmt.Sprint(v)
+				field.Title = i
+				field.Value = vv
+				if len([]rune(vv)) < 36 {
+					field.Short = true
+				} else {
+					field.Short = false
+				}
+				fields = append(fields, field)
 			}
-			fields = append(fields, field)
 		}
 
 		field.Title = Time
 		field.Short = false
-		field.Value = falcopayload.Time.String()
+		field.Value = fmt.Sprint(kubearmorpayload.Timestamp)
 		fields = append(fields, field)
-		if falcopayload.Hostname != "" {
+		if kubearmorpayload.Hostname != "" {
 			field.Title = Hostname
-			field.Value = falcopayload.Hostname
+			field.Value = kubearmorpayload.Hostname
 			field.Short = true
 			fields = append(fields, field)
 		}
 	}
 
-	attachment.Fallback = falcopayload.Output
-	attachment.Fields = fields
-	if config.Rocketchat.OutputFormat == All || config.Rocketchat.OutputFormat == Text || config.Rocketchat.OutputFormat == "" {
-		attachment.Text = falcopayload.Output
-	}
-
 	if config.Rocketchat.MessageFormatTemplate != nil {
 		buf := &bytes.Buffer{}
-		if err := config.Rocketchat.MessageFormatTemplate.Execute(buf, falcopayload); err != nil {
+		if err := config.Rocketchat.MessageFormatTemplate.Execute(buf, kubearmorpayload); err != nil {
 			log.Printf("[ERROR] : RocketChat - Error expanding RocketChat message %v", err)
 		} else {
 			messageText = buf.String()
@@ -77,23 +77,11 @@ func newRocketchatPayload(falcopayload types.FalcoPayload, config *types.Configu
 
 	if config.Rocketchat.OutputFormat == All || config.Rocketchat.OutputFormat == Fields || config.Rocketchat.OutputFormat == "" {
 		var color string
-		switch falcopayload.Priority {
-		case types.Emergency:
-			color = Red
-		case types.Alert:
+		switch kubearmorpayload.EventType {
+		case "Alert":
 			color = Orange
-		case types.Critical:
-			color = Orange
-		case types.Error:
-			color = Red
-		case types.Warning:
-			color = Yellow
-		case types.Notice:
-			color = Lightcyan
-		case types.Informational:
+		case "Log":
 			color = LigthBlue
-		case types.Debug:
-			color = PaleCyan
 		}
 		attachment.Color = color
 
@@ -107,7 +95,7 @@ func newRocketchatPayload(falcopayload types.FalcoPayload, config *types.Configu
 
 	s := slackPayload{
 		Text:        messageText,
-		Username:    "Falcosidekick",
+		Username:    "Kubearmor",
 		IconURL:     iconURL,
 		Attachments: attachments}
 
@@ -115,10 +103,10 @@ func newRocketchatPayload(falcopayload types.FalcoPayload, config *types.Configu
 }
 
 // RocketchatPost posts event to Rocketchat
-func (c *Client) RocketchatPost(falcopayload types.FalcoPayload) {
+func (c *Client) RocketchatPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Rocketchat.Add(Total, 1)
 
-	err := c.Post(newRocketchatPayload(falcopayload, c.Config))
+	err := c.Post(newRocketchatPayload(kubearmorpayload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:rocketchat", "status:error"})
 		c.Stats.Rocketchat.Add(Error, 1)
@@ -131,4 +119,50 @@ func (c *Client) RocketchatPost(falcopayload types.FalcoPayload) {
 	go c.CountMetric(Outputs, 1, []string{"output:rocketchat", "status:ok"})
 	c.Stats.Rocketchat.Add(OK, 1)
 	c.PromStats.Outputs.With(map[string]string{"destination": "rocketchat", "status": OK}).Inc()
+}
+
+func (c *Client) WatchRocketchatPostAlerts() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	for AlertRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.RocketchatPost(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchRocketchatPostLogs() error {
+	uid := uuid.Must(uuid.NewRandom()).String()
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	for LogRunning {
+		select {
+		// case <-Context().Done():
+		// 	return nil
+		case resp := <-conn:
+			c.RocketchatPost(resp)
+
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+
+	return nil
 }

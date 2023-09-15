@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 	"github.com/streadway/amqp"
 )
 
@@ -40,10 +41,10 @@ func NewRabbitmqClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // Publish sends a message to a Rabbitmq
-func (c *Client) Publish(falcopayload types.FalcoPayload) {
+func (c *Client) Publish(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Rabbitmq.Add(Total, 1)
 
-	payload, _ := json.Marshal(falcopayload)
+	payload, _ := json.Marshal(kubearmorpayload)
 
 	err := c.RabbitmqClient.Publish("", c.Config.Rabbitmq.Queue, false, false, amqp.Publishing{
 		ContentType: "text/plain",
@@ -63,4 +64,48 @@ func (c *Client) Publish(falcopayload types.FalcoPayload) {
 	c.Stats.Rabbitmq.Add(OK, 1)
 	go c.CountMetric("outputs", 1, []string{"output:rabbitmq", "status:ok"})
 	c.PromStats.Outputs.With(map[string]string{"destination": "rabbitmq", "status": OK}).Inc()
+}
+
+func (c *Client) WatchRabbitmqPublishAlerts() error {
+	uid := "Rabbitmq"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addAlertStruct(uid, conn)
+	defer removeAlertStruct(uid)
+
+	Running := true
+	for Running {
+		select {
+		case resp := <-conn:
+			c.Publish(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) WatchRabbitmqPublishLogs() error {
+	uid := "Rabbitmq"
+
+	conn := make(chan types.KubearmorPayload, 1000)
+	defer close(conn)
+	addLogStruct(uid, conn)
+	defer removeLogStruct(uid)
+
+	Running := true
+	for Running {
+		select {
+		case resp := <-conn:
+			c.Publish(resp)
+		default:
+			time.Sleep(time.Millisecond * 10)
+
+		}
+	}
+
+	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // Records are the items inside the request wrapper
@@ -20,7 +20,7 @@ type KafkaRestPayload struct {
 }
 
 // KafkaRestPost posts event the Kafka Rest Proxy
-func (c *Client) KafkaRestPost(falcopayload types.FalcoPayload) {
+func (c *Client) KafkaRestPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.KafkaRest.Add(Total, 1)
 
 	var version int
@@ -32,7 +32,7 @@ func (c *Client) KafkaRestPost(falcopayload types.FalcoPayload) {
 	default:
 		version = 2
 	}
-	falcoMsg, err := json.Marshal(falcopayload)
+	Msg, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.Stats.KafkaRest.Add(Error, 1)
 		c.PromStats.Outputs.With(map[string]string{"destination": "kafkarest", "status": Error}).Inc()
@@ -44,7 +44,7 @@ func (c *Client) KafkaRestPost(falcopayload types.FalcoPayload) {
 
 	payload := KafkaRestPayload{
 		Records: []Records{{
-			Value: base64.StdEncoding.EncodeToString(falcoMsg),
+			Value: base64.StdEncoding.EncodeToString(Msg),
 		}},
 	}
 

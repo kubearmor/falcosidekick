@@ -7,11 +7,11 @@ import (
 
 	stan "github.com/nats-io/stan.go"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // StanPublish publishes event to NATS Streaming
-func (c *Client) StanPublish(falcopayload types.FalcoPayload) {
+func (c *Client) StanPublish(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Stan.Add(Total, 1)
 
 	nc, err := stan.Connect(c.Config.Stan.ClusterID, c.Config.Stan.ClientID, stan.NatsURL(c.EndpointURL.String()))
@@ -22,15 +22,14 @@ func (c *Client) StanPublish(falcopayload types.FalcoPayload) {
 	}
 	defer nc.Close()
 
-	r := strings.Trim(slugRegularExpression.ReplaceAllString(strings.ToLower(falcopayload.Rule), "_"), "_")
-	j, err := json.Marshal(falcopayload)
+	j, err := json.Marshal(kubearmorpayload)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err.Error())
 		return
 	}
 
-	err = nc.Publish("falco."+strings.ToLower(falcopayload.Priority.String())+"."+r, j)
+	err = nc.Publish("kubearmor."+strings.ToLower(kubearmorpayload.EventType)+".", j)
 	if err != nil {
 		c.setStanErrorMetrics()
 		log.Printf("[ERROR] : STAN - %v\n", err)

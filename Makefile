@@ -49,19 +49,19 @@ GOLANGCI_LINT := $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER)
 ## Build
 ## --------------------------------------
 
-.PHONY: falcosidekick
-falcosidekick:
+.PHONY: sidekick
+sidekick:
 	$(GO) mod download
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -gcflags all=-trimpath=/src -asmflags all=-trimpath=/src -a -installsuffix cgo -o $@ .
 
-.PHONY: falcosidekick-linux-amd64
-falcosidekick-linux-amd64:
+.PHONY: sidekick-linux-amd64
+sidekick-linux-amd64:
 	$(GO) mod download
-	GOOS=linux GOARCH=amd64 $(GO) build -gcflags all=-trimpath=/src -asmflags all=-trimpath=/src -a -installsuffix cgo -o falcosidekick .
+	GOOS=linux GOARCH=amd64 $(GO) build -gcflags all=-trimpath=/src -asmflags all=-trimpath=/src -a -installsuffix cgo -o sidekick .
 
 .PHONY: build-image
-build-image: falcosidekick-linux-amd64
-	$(DOCKER) build -t falcosecurity/falcosidekick:latest .
+build-image: sidekick-linux-amd64
+	$(DOCKER) build -t kubearmor/sidekick:latest .
 
 ## --------------------------------------
 ## Test

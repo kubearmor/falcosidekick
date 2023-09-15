@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // Some constant strings to use in request headers
@@ -19,7 +19,7 @@ const KubelessEventIDKey = "event-id"
 const KubelessUserAgentKey = "User-Agent"
 const KubelessEventTypeKey = "event-type"
 const KubelessEventNamespaceKey = "event-namespace"
-const KubelessEventTypeValue = "falco"
+const KubelessEventTypeValue = "kubearmor"
 const KubelessContentType = "application/json"
 
 // NewKubelessClient returns a new output.Client for accessing Kubernetes.
@@ -57,11 +57,11 @@ func NewKubelessClient(config *types.Configuration, stats *types.Statistics, pro
 }
 
 // KubelessCall .
-func (c *Client) KubelessCall(falcopayload types.FalcoPayload) {
+func (c *Client) KubelessCall(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Kubeless.Add(Total, 1)
 
 	if c.Config.Kubeless.Kubeconfig != "" {
-		str, _ := json.Marshal(falcopayload)
+		str, _ := json.Marshal(kubearmorpayload)
 		req := c.KubernetesClient.CoreV1().RESTClient().Post().AbsPath("/api/v1/namespaces/" + c.Config.Kubeless.Namespace + "/services/" + c.Config.Kubeless.Function + ":" + strconv.Itoa(c.Config.Kubeless.Port) + "/proxy/").Body(str)
 		req.SetHeader(KubelessEventIDKey, uuid.New().String())
 		req.SetHeader(ContentTypeHeaderKey, KubelessContentType)
@@ -87,7 +87,7 @@ func (c *Client) KubelessCall(falcopayload types.FalcoPayload) {
 		c.AddHeader(KubelessEventNamespaceKey, c.Config.Kubeless.Namespace)
 		c.ContentType = KubelessContentType
 
-		err := c.Post(falcopayload)
+		err := c.Post(kubearmorpayload)
 		if err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:kubeless", "status:error"})
 			c.Stats.Kubeless.Add(Error, 1)

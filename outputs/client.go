@@ -17,7 +17,10 @@ import (
 	"strings"
 	"sync"
 
+	pb "github.com/kubearmor/KubeArmor/protobuf"
+
 	crdClient "github.com/kubernetes-sigs/wg-policy-prototypes/policy-report/kube-bench-adapter/pkg/generated/v1alpha2/clientset/versioned"
+	"google.golang.org/grpc"
 
 	gcpfunctions "cloud.google.com/go/functions/apiv1"
 	"github.com/streadway/amqp"
@@ -35,7 +38,7 @@ import (
 	timescaledb "github.com/jackc/pgx/v5/pgxpool"
 	redis "github.com/redis/go-redis/v9"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // ErrHeaderMissing = 400
@@ -77,7 +80,7 @@ const DefaultContentType = "application/json; charset=utf-8"
 const ContentTypeHeaderKey = "Content-Type"
 const UserAgentHeaderKey = "User-Agent"
 const AuthorizationHeaderKey = "Authorization"
-const UserAgentHeaderValue = "Falcosidekick"
+const UserAgentHeaderValue = "sidekick"
 
 // files names are static fo the shake of helm and single docker compatibility
 const MutualTLSClientCertFilename = "/client.crt"
@@ -123,6 +126,22 @@ type Client struct {
 	MQTTClient        mqtt.Client
 	TimescaleDBClient *timescaledb.Pool
 	RedisClient       *redis.Client
+
+	// connection
+	Conn *grpc.ClientConn
+
+	// alerts
+	AlertStream pb.LogService_WatchAlertsClient
+
+	// logs
+	LogStream pb.LogService_WatchLogsClient
+
+	// wait group
+	WgServer sync.WaitGroup
+
+	GetLogs bool
+	//
+	Running bool
 }
 
 // NewClient returns a new output.Client for accessing the different API.

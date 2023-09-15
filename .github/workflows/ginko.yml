@@ -1,0 +1,84 @@
+name: ci-test-ginkgo
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Auto-testing Framework
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "v1.20"
+
+      - name: Install the latest LLVM toolchain
+        run: | 
+          wget https://raw.githubusercontent.com/kubearmor/KubeArmor/main/.github/workflows/install-llvm.sh
+          chmod +x install-llvm.sh
+          ./install-llvm.sh
+
+      - name: Setup k3s ${{ inputs.k3s-version }}${{ inputs.k3s-channel }}
+        run: |
+          wget  https://raw.githubusercontent.com/kubearmor/KubeArmor/main/contribution/k3s/install_k3s.sh
+          chmod +x install_k3s.sh
+          /bin/bash ./install_k3s.sh
+ 
+      - name: Add Helm Repository 
+        run: |
+          helm repo add kubearmor https://kubearmor.github.io/charts
+          helm repo update kubearmor
+          sleep 10
+      
+      - name: Deploy KubeArmorOperator Helm Chart
+        run: |
+          helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kube-system
+          kubectl wait --for=condition=ready --timeout=15m -n kube-system pod -l kubearmor-app=kubearmor-operator
+          sleep 20
+
+      - name: Install KubeArmor 
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/pkg/KubeArmorOperator/config/samples/sample-config.yml
+          sleep 30
+          kubectl wait --timeout=5m --for=condition=ready pod -l kubearmor-app,kubearmor-app!=kubearmor-snitch -n kube-system
+          kubectl get pods -A
+
+      - name: Install syslog server 
+        run: |
+          kubectl apply -f ./tests/syslog.yaml
+          kubectl get pods -A
+
+      - name: Install multiubuntu 
+        run: |
+          kubectl apply -f ./tests/multiubuntu.yaml
+          sleep 10
+          kubectl get pods -A
+          kubectl wait --timeout=5m --for=condition=ready pod -l group=group-1 -n multiubuntu
+
+
+      - name: Apply policy to stop cat
+        run: |
+          kubectl apply -f ./tests/policy.yaml
+          kubectl get pods -A
+
+      - name: Install deimos using Helm
+        run: |
+          helm install deimos ./helm/deimos/ --set config.syslog.host=syslog-server-service.default.svc.cluster.local --set config.syslog.port=514 --set config.syslog.format=cef --set config.syslog.protocol=udp --set config.policyreport.enabled=true -n kube-system
+          sleep 10
+          kubectl get pods -A
+
+      - name: Test Sidekick using Ginkgo
+        run: |
+          go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
+          make
+        working-directory: ./tests
+        timeout-minutes: 30
+

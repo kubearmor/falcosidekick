@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // NodeRedPost posts event to Slack
-func (c *Client) NodeRedPost(falcopayload types.FalcoPayload) {
+func (c *Client) NodeRedPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.NodeRed.Add(Total, 1)
 
 	c.httpClientLock.Lock()
@@ -23,7 +23,7 @@ func (c *Client) NodeRedPost(falcopayload types.FalcoPayload) {
 		}
 	}
 
-	err := c.Post(falcopayload)
+	err := c.Post(kubearmorpayload)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:nodered", "status:error"})
 		c.Stats.NodeRed.Add(Error, 1)

@@ -1,10 +1,11 @@
 package outputs
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 type opsgeniePayload struct {
@@ -15,58 +16,49 @@ type opsgeniePayload struct {
 	Priority    string            `json:"priority,omitempty"`
 }
 
-func newOpsgeniePayload(falcopayload types.FalcoPayload, config *types.Configuration) opsgeniePayload {
-	details := make(map[string]string, len(falcopayload.OutputFields))
-	for i, j := range falcopayload.OutputFields {
+func newOpsgeniePayload(kubearmorpayload types.KubearmorPayload, config *types.Configuration) opsgeniePayload {
+	details := make(map[string]string, len(kubearmorpayload.OutputFields))
+	for i, j := range kubearmorpayload.OutputFields {
 		switch v := j.(type) {
 		case string:
 			details[strings.ReplaceAll(i, ".", "_")] = v
 		default:
-			continue
+			vv := fmt.Sprint(v)
+			details[strings.ReplaceAll(i, ".", "_")] = vv
 		}
 	}
 
-	details["source"] = falcopayload.Source
-	details["rule"] = falcopayload.Rule
-	details["priority"] = falcopayload.Priority.String()
-	if falcopayload.Hostname != "" {
-		details[Hostname] = falcopayload.Hostname
-	}
-	if len(falcopayload.Tags) != 0 {
-		details["tags"] = strings.Join(falcopayload.Tags, ", ")
+	details["source"] = "kubearmor"
+	details["priority"] = kubearmorpayload.EventType
+	if kubearmorpayload.Hostname != "" {
+		details[Hostname] = kubearmorpayload.Hostname
 	}
 
 	var prio string
-	switch falcopayload.Priority {
-	case types.Emergency, types.Alert:
+	switch kubearmorpayload.EventType {
+	case "Alert":
 		prio = "P1"
-	case types.Critical:
-		prio = "P2"
-	case types.Error:
-		prio = "P3"
-	case types.Warning:
-		prio = "P4"
 	default:
 		prio = "P5"
 	}
 
 	return opsgeniePayload{
-		Message:     falcopayload.Output,
-		Entity:      "Falcosidekick",
-		Description: falcopayload.Rule,
+		Message:     kubearmorpayload.EventType + " for " + kubearmorpayload.OutputFields["PodName"].(string),
+		Entity:      "Kubearmor",
+		Description: kubearmorpayload.EventType,
 		Details:     details,
 		Priority:    prio,
 	}
 }
 
 // OpsgeniePost posts event to OpsGenie
-func (c *Client) OpsgeniePost(falcopayload types.FalcoPayload) {
+func (c *Client) OpsgeniePost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Opsgenie.Add(Total, 1)
 	c.httpClientLock.Lock()
 	defer c.httpClientLock.Unlock()
 	c.AddHeader(AuthorizationHeaderKey, "GenieKey "+c.Config.Opsgenie.APIKey)
 
-	err := c.Post(newOpsgeniePayload(falcopayload, c.Config))
+	err := c.Post(newOpsgeniePayload(kubearmorpayload, c.Config))
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:opsgenie", "status:error"})
 		c.Stats.Opsgenie.Add(Error, 1)

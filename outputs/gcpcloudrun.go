@@ -3,11 +3,11 @@ package outputs
 import (
 	"log"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // CloudRunFunctionPost call Cloud Function
-func (c *Client) CloudRunFunctionPost(falcopayload types.FalcoPayload) {
+func (c *Client) CloudRunFunctionPost(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.GCPCloudRun.Add(Total, 1)
 
 	if c.Config.GCP.CloudRun.JWT != "" {
@@ -16,7 +16,7 @@ func (c *Client) CloudRunFunctionPost(falcopayload types.FalcoPayload) {
 		c.AddHeader(AuthorizationHeaderKey, "Bearer "+c.Config.GCP.CloudRun.JWT)
 	}
 
-	err := c.Post(falcopayload)
+	err := c.Post(kubearmorpayload)
 	if err != nil {
 		go c.CountMetric(Outputs, 1, []string{"output:gcpcloudrun", "status:error"})
 		c.Stats.GCPCloudRun.Add(Error, 1)

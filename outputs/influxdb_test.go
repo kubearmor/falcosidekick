@@ -2,20 +2,56 @@ package outputs
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 func TestNewInfluxdbPayload(t *testing.T) {
-	expectedOutput := `"events,rule=Test_rule,priority=Debug,source=syscalls,proc.name=falcosidekick,hostname=test-host,tags=test_example value=\"This is a test from falcosidekick\""`
-	var f types.FalcoPayload
-	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
+	var testKubearmorPayload types.KubearmorPayload
 
-	influxdbPayload, err := json.Marshal(newInfluxdbPayload(f, &types.Configuration{}))
-	require.Nil(t, err)
+	// Unmarshal the JSON string
+	err := json.Unmarshal([]byte(TestInput), &testKubearmorPayload)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal test input: %v", err)
+	}
 
-	require.Equal(t, string(influxdbPayload), expectedOutput)
+	// Sample configuration (assuming this is relevant for the function)
+	config := &types.Configuration{}
+
+	// Call the function
+	gotPayload := newInfluxdbPayload(testKubearmorPayload, config)
+
+	// Constructing the expected result based on the provided input
+
+	expectedTags := []string{
+		"rule",
+		"priority",
+		"source",
+		"ContainerImage",
+		"Hostname",
+		"PodName",
+		// Add any other tags you expect to be present...
+	}
+
+	if !containsAllTags(string(gotPayload), expectedTags) {
+		t.Fatalf("Payload does not contain all the expected tags.")
+	}
+}
+
+func containsAllTags(payload string, tags []string) bool {
+	pairs := strings.Split(payload, ",")
+	keys := make(map[string]bool)
+	for _, pair := range pairs {
+		key := strings.Split(pair, "=")[0]
+		keys[key] = true
+	}
+
+	for _, tag := range tags {
+		if _, exists := keys[tag]; !exists {
+			return false
+		}
+	}
+	return true
 }

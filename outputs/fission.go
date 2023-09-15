@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // Some constant strings to use in request headers
@@ -57,11 +57,11 @@ func NewFissionClient(config *types.Configuration, stats *types.Statistics, prom
 }
 
 // FissionCall .
-func (c *Client) FissionCall(falcopayload types.FalcoPayload) {
+func (c *Client) FissionCall(kubearmorpayload types.KubearmorPayload) {
 	c.Stats.Fission.Add(Total, 1)
 
 	if c.Config.Fission.KubeConfig != "" {
-		str, _ := json.Marshal(falcopayload)
+		str, _ := json.Marshal(kubearmorpayload)
 		req := c.KubernetesClient.CoreV1().RESTClient().Post().AbsPath("/api/v1/namespaces/" +
 			c.Config.Fission.RouterNamespace + "/services/" + c.Config.Fission.RouterService +
 			":" + strconv.Itoa(c.Config.Fission.RouterPort) + "/proxy/" + "/fission-function/" +
@@ -86,7 +86,7 @@ func (c *Client) FissionCall(falcopayload types.FalcoPayload) {
 		c.AddHeader(FissionEventIDKey, uuid.New().String())
 		c.ContentType = FissionContentType
 
-		err := c.Post(falcopayload)
+		err := c.Post(kubearmorpayload)
 		if err != nil {
 			go c.CountMetric(Outputs, 1, []string{"output:Fission", "status:error"})
 			c.Stats.Fission.Add(Error, 1)

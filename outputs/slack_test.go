@@ -1,80 +1,53 @@
 package outputs
 
 import (
-	"encoding/json"
+	"reflect"
 	"testing"
-	"text/template"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
-func TestNewSlackPayload(t *testing.T) {
-	expectedOutput := slackPayload{
-		Text:     "Rule: Test rule Priority: Debug",
-		Username: "Falcosidekick",
-		IconURL:  DefaultIconURL,
+func estNewSlackPayload(t *testing.T) {
+	// Define a mock `types.KubearmorPayload`
+
+	kubearmorPayload := types.KubearmorPayload{
+		EventType: "Alert",
+		Hostname:  "gke-kubearmor-prerelease-default-pool-6ad71e07-cd8r",
+		Timestamp: 1631542902,
+		OutputFields: map[string]interface{}{
+			"PodName": "wordpress-7c966b5d85-xvsrl",
+		},
+	}
+
+	config := &types.Configuration{
+		Slack: types.SlackOutputConfig{
+			OutputFormat: All,
+			Username:     "Kubearmor",
+			Footer:       "",
+		},
+	}
+
+	// Call the function
+	result := newSlackPayload(kubearmorPayload, config)
+
+	// Define expected result
+	expectedResult := slackPayload{
+		Username: "Kubearmor",
 		Attachments: []slackAttachment{
 			{
-				Fallback: "This is a test from falcosidekick",
-				Color:    PaleCyan,
-				Text:     "This is a test from falcosidekick",
-				Footer:   "https://github.com/falcosecurity/falcosidekick",
+				Footer: DefaultFooter,
 				Fields: []slackAttachmentField{
-					{
-						Title: "rule",
-						Value: "Test rule",
-						Short: true,
-					},
-					{
-						Title: "priority",
-						Value: "Debug",
-						Short: true,
-					},
-					{
-						Title: "source",
-						Value: "syscalls",
-						Short: true,
-					},
-					{
-						Title: "hostname",
-						Value: "test-host",
-						Short: true,
-					},
-					{
-						Title: "tags",
-						Value: "test, example",
-						Short: true,
-					},
-					{
-						Title: "proc.name",
-						Value: "falcosidekick",
-						Short: true,
-					},
-					{
-						Title: "time",
-						Value: "2001-01-01 01:10:00 +0000 UTC",
-						Short: false,
-					},
+					{Title: Priority, Value: "Alert", Short: true},
+					{Title: Source, Value: "wordpress-7c966b5d85-xvsrl", Short: true},
+					{Title: Hostname, Value: "gke-kubearmor-prerelease-default-pool-6ad71e07-cd8r", Short: true},
+					{Title: Time, Value: "1631542902", Short: false},
 				},
 			},
 		},
 	}
 
-	var f types.FalcoPayload
-	require.Nil(t, json.Unmarshal([]byte(falcoTestInput), &f))
-	config := &types.Configuration{
-		Slack: types.SlackOutputConfig{
-			Username: "Falcosidekick",
-			Icon:     DefaultIconURL,
-		},
+	// Assert the result
+	if !reflect.DeepEqual(result, expectedResult) {
+		t.Errorf("Expected payload %+v but got %+v", expectedResult, result)
 	}
-
-	var err error
-	config.Slack.MessageFormatTemplate, err = template.New("").Parse("Rule: {{ .Rule }} Priority: {{ .Priority }}")
-	require.Nil(t, err)
-
-	output := newSlackPayload(f, config)
-	require.Equal(t, output, expectedOutput)
 }

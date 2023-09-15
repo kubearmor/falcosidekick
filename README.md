@@ -1,27 +1,20 @@
-# Falcosidekick
+# Sidekick
 
-[![Falco Ecosystem Repository](https://github.com/falcosecurity/evolution/blob/main/repos/badges/falco-ecosystem-blue.svg)](https://github.com/falcosecurity/evolution/blob/main/REPOSITORIES.md#ecosystem-scope) [![Stable](https://img.shields.io/badge/status-stable-brightgreen?style=for-the-badge)](https://github.com/falcosecurity/evolution/blob/main/REPOSITORIES.md#stable)
+**This work is primarily a derivative work of falcosidekick**
 
-![falcosidekick](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/falcosidekick_color.png)
-
-![release](https://flat.badgen.net/github/release/falcosecurity/falcosidekick/latest?color=green)
-![last commit](https://flat.badgen.net/github/last-commit/falcosecurity/falcosidekick)
 ![licence](https://flat.badgen.net/badge/license/MIT/blue)
-![docker pulls](https://flat.badgen.net/docker/pulls/falcosecurity/falcosidekick?icon=docker)
-[![falcosidekick](https://circleci.com/gh/falcosecurity/falcosidekick.svg?style=shield)](https://circleci.com/gh/falcosecurity/falcosidekick)
 
 ## Description
 
-A simple daemon for connecting [`Falco`](https://github.com/falcosecurity/falco) to your ecosystem. It takes a `Falco`'s events and
+A simple daemon for connecting `Kubearmor` to your ecosystem. It takes a `kubearmor`'s events and
 forward them to different outputs in a fan-out way.
 
-It works as a single endpoint for as many as you want `Falco` instances :
+It works as a single endpoint for as many as you want `kubearmor` instances :
 
-![falco_with_falcosidekick](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/falco_with_falcosidekick.png)
 
 ## Outputs
 
-`Falcosidekick` manages a large variety of outputs with different purposes.
+`Sidekick` manages a large variety of outputs with different purposes.
 
 ### Chat
 
@@ -38,9 +31,9 @@ It works as a single endpoint for as many as you want `Falco` instances :
 
 - [**Datadog**](https://www.datadoghq.com/)
 - [**Influxdb**](https://www.influxdata.com/products/influxdb-overview/)
-- [**StatsD**](https://github.com/statsd/statsd) (for monitoring of `falcosidekick`)
-- [**DogStatsD**](https://docs.datadoghq.com/developers/dogstatsd/?tab=go) (for monitoring of `falcosidekick`)
-- [**Prometheus**](https://prometheus.io/) (for both events and monitoring of `falcosidekick`)
+- [**StatsD**](https://github.com/statsd/statsd) (for monitoring of `sidekick`)
+- [**DogStatsD**](https://docs.datadoghq.com/developers/dogstatsd/?tab=go) (for monitoring of `sidekick`)
+- [**Prometheus**](https://prometheus.io/) (for both events and monitoring of `sidekick`)
 - [**Wavefront**](https://www.wavefront.com)
 - [**Spyderbat**](https://www.spyderbat.com)
 - [**TimescaleDB**](https://www.timescale.com/)
@@ -104,7 +97,7 @@ It works as a single endpoint for as many as you want `Falco` instances :
 
 - **Webhook**
 - [**Node-RED**](https://nodered.org/)
-- [**WebUI**](https://github.com/falcosecurity/falcosidekick-ui) (a Web UI for displaying latest events in real time)
+- [**WebUI**](https://github.com/kubearmor/sidekick-ui) (a Web UI for displaying latest events in real time)
 
 ### SIEM
 
@@ -115,7 +108,7 @@ It works as a single endpoint for as many as you want `Falco` instances :
 - [**n8n**](https://n8n.io/)
 
 ### Other
-- [**Policy Report**](https://github.com/kubernetes-sigs/wg-policy-prototypes/tree/master/policy-report/falco-adapter)
+- **Policy Report**
 
 ## Usage
 
@@ -125,58 +118,16 @@ swarm service, ...)
 ### With docker
 
 ```bash
-docker run -d -p 2801:2801 -e SLACK_WEBHOOKURL=XXXX -e DATADOG_APIKEY=XXXX falcosecurity/falcosidekick
+docker run -d -p 2801:2801 -e SLACK_WEBHOOKURL=XXXX -e DATADOG_APIKEY=XXXX kubearmor/sidekick
 ```
 
 ### With Helm
 
-See
-[https://github.com/falcosecurity/charts/blob/master/falcosidekick/README.md](https://github.com/falcosecurity/charts/blob/master/falcosidekick/README.md)
+to be added 
 
-```bash
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-helm install falcosidekick --set config.debug=true falcosecurity/falcosidekick
-```
-
-### Falco's config
-
-#### with falco.yaml
-
-If managing _falco.yaml_ manually, set this:
-
-```yaml
-json_output: true
-json_include_output_property: true
-http_output:
-  enabled: true
-  url: "http://localhost:2801/"
-```
 
 #### with Helm
 
-If installing `falco` with `Helm`, set this (adapted to your environment) in
-your _values.yaml_ :
-
-```yaml
-jsonOutput: true
-jsonIncludeOutputProperty: true
-httpOutput:
-  enabled: true
-  url: "http://falcosidekick:2801/"
-```
-
-or
-
-```yaml
-jsonOutput: true
-jsonIncludeOutputProperty: true
-programOutput:
-  enabled: true
-  keepAlive: false
-  program: "curl -d @- falcosidekick:2801/"
-```
 
 ### Configuration
 
@@ -188,14 +139,14 @@ vars_ override values from _file_.
 See **config_example.yaml** :
 
 ```yaml
-#listenaddress: "" # ip address to bind falcosidekick to (default: "" meaning all addresses)
+#listenaddress: "" # ip address to bind sidekick to (default: "" meaning all addresses)
 #listenport: 2801 # port to listen for daemon (default: 2801)
 debug: false # if true all outputs will print in stdout the payload they send (default: false)
-customfields: # custom fields are added to falco events, if the value starts with % the relative env var is used
+customfields: # custom fields are added to kubearmor events, if the value starts with % the relative env var is used
   # Akey: "AValue"
   # Bkey: "BValue"
   # Ckey: "CValue"
-templatedfields: # templated fields are added to falco events and metrics, it uses Go template + output_fields values
+templatedfields: # templated fields are added to kubearmor events and metrics, it uses Go template + output_fields values
   # Dkey: '{{ or (index . "k8s.ns.labels.foo") "bar" }}'
 # bracketreplacer: "_" # if not empty, replace the brackets in keys of Output Fields
 mutualtlsfilespath: "/etc/certs" # folder which will used to store client.crt, client.key and ca.crt files for mutual tls for outputs, will be deprecated in the future (default: "/etc/certs")
@@ -220,7 +171,7 @@ slack:
   #channel: "" # Slack channel (optionnal)
   #footer: "" # Slack footer
   #icon: "" # Slack icon (avatar)
-  #username: "" # Slack username (default: Falcosidekick)
+  #username: "" # Slack username (default: kubearmor)
   outputformat: "all" # all (default), text, fields
   minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   messageformat: 'Alert : rule *{{ .Rule }}* triggered by user *{{ index
@@ -229,7 +180,7 @@ slack:
 rocketchat:
   webhookurl: "" # Rocketchat WebhookURL (ex: http://XXXX/hooks/YYYY), if not empty, Rocketchat output is enabled
   #icon: "" # Rocketchat icon (avatar)
-  #username: "" # Rocketchat username (default: Falcosidekick)
+  #username: "" # Rocketchat username (default: kubearmor)
   outputformat: "all" # all (default), text, fields
   minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # messageformat: "Alert : rule *{{ .Rule }}* triggered by user *{{ index .OutputFields \"user.name\" }}*" # a Go template to format Rocketchat Text above Attachment, displayed in addition to the output from `ROCKETCHAT_OUTPUTFORMAT`, see [Slack Message Formatting](#slack-message-formatting) in the README for details. If empty, no Text is displayed before Attachment.
@@ -240,7 +191,7 @@ mattermost:
   webhookurl: "" # Mattermost WebhookURL (ex: http://XXXX/hooks/YYYY), if not empty, Mattermost output is enabled
   #footer: "" # Mattermost footer
   #icon: "" # Mattermost icon (avatar)
-  #username: "" # Mattermost username (default: Falcosidekick)
+  #username: "" # Mattermost username (default: kubearmor)
   outputformat: "all" # all (default), text, fields
   minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # messageformat: "Alert : rule **{{ .Rule }}** triggered by user **{{ index .OutputFields \"user.name\" }}**" # a Go template to format Mattermost Text above Attachment, displayed in addition to the output from `MATTERMOST_OUTPUTFORMAT`, see [Slack Message Formatting](#slack-message-formatting) in the README for details. If empty, no Text is displayed before Attachment.
@@ -267,13 +218,13 @@ alertmanager:
   # expiresafter: "" if set to a non-zero value, alert expires after that time in seconds (default: 0)
   # extralabels: "" # comma separated list of labels composed of a ':' separated name and value that is added to the Alerts. Example: my_label_1:my_value_1, my_label_1:my_value_2
   # extraannotations: "" # comma separated list of annotations composed of a ':' separated name and value that is added to the Alerts. Example: my_annotation_1:my_value_1, my_annotation_1:my_value_2
-  # customseveritymap: "" # comma separated list of tuple composed of a ':' separated Falco priority and Alertmanager severity that is used to override the severity label associated to the priority level of falco event. Example: debug:value_1,critical:value2.  Default mapping (priority:severity): emergency:critical,alert:critical,critical:critical,error:warning,warning:warning,notice:information,informational:information,debug:information
+  # customseveritymap: "" # comma separated list of tuple composed of a ':' separated kubearmor priority and Alertmanager severity that is used to override the severity label associated to the priority level of kubearmor event. Example: debug:value_1,critical:value2.  Default mapping (priority:severity): emergency:critical,alert:critical,critical:critical,error:warning,warning:warning,notice:information,informational:information,debug:information
   # dropeventdefaultpriority: "" # default priority of dropped events, values are emergency|alert|critical|error|warning|notice|informational|debug (default: "critical")
   # dropeventthresholds: # comma separated list of priority re-evaluation thresholds of dropped events composed of a ':' separated integer threshold and string priority. Example: `10000:critical, 100:warning, 1:informational` (default: `"10000:critical, 1000:critical, 100:critical, 10:warning, 1:warning"`)
 
 elasticsearch:
   # hostport: "" # http://{domain or ip}:{port}, if not empty, Elasticsearch output is enabled
-  # index: "falco" # index (default: falco)
+  # index: "kubearmor" # index (default: kubearmor)
   # type: "_doc"
   # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # suffix: "daily" # date suffix for index rotation : daily (default), monthly, annually, none
@@ -286,9 +237,9 @@ elasticsearch:
 
 influxdb:
   # hostport: "" # http://{domain or ip}:{port}, if not empty, Influxdb output is enabled
-  # database: "falco" # Influxdb database (api v1 only) (default: falco)
+  # database: "kubearmor" # Influxdb database (api v1 only) (default: kubearmor)
   # organization: "" # Influxdb organization
-  # bucket: "falco" # Metrics bucket (default: falco)
+  # bucket: "kubearmor" # Metrics bucket (default: kubearmor)
   # precision: "ns" # Write precision
   # user: "" # user to use if auth is enabled in Influxdb
   # password: "" # pasword to use if auth is enabled in Influxdb
@@ -342,10 +293,10 @@ aws:
     # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   cloudwatchlogs:
     # loggroup : "" #  AWS CloudWatch Logs Group name, if not empty, CloudWatch Logs output is enabled
-    # logstream : "" # AWS CloudWatch Logs Stream name, if empty, Falcosidekick will try to create a log stream
+    # logstream : "" # AWS CloudWatch Logs Stream name, if empty, sidekick will try to create a log stream
     # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   s3:
-    # bucket: "falcosidekick" # AWS S3, bucket name
+    # bucket: "sidekick" # AWS S3, bucket name
     # prefix : "" # name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json
     # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   securitylake.:
@@ -379,11 +330,11 @@ prometheus:
 
 statsd:
   forwarder: "" # The address for the StatsD forwarder, in the form "host:port", if not empty StatsD is enabled
-  namespace: "falcosidekick." # A prefix for all metrics (default: "falcosidekick.")
+  namespace: "kube-system." # A prefix for all metrics (default: "kube-system.")
 
 dogstatsd:
   forwarder: "" # The address for the DogStatsD forwarder, in the form "host:port", if not empty DogStatsD is enabled
-  namespace: "falcosidekick." # A prefix for all metrics (default: "falcosidekick.")
+  namespace: "kube-system." # A prefix for all metrics (default: "kube-system.")
   # tag :
   #   key: "value"
 
@@ -488,7 +439,7 @@ kubeless:
   function: "" # Name of Kubeless function, if not empty, Kubeless is enabled
   namespace: "" # Namespace of Kubeless function (mandatory)
   port: 8080 # Port of service of Kubeless function
-  kubeconfig: "~/.kube/config" # Kubeconfig file to use (only if falcoside is running outside the cluster)
+  kubeconfig: "~/.kube/config" # Kubeconfig file to use (only if sidekick is running outside the cluster)
   # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
 
@@ -498,7 +449,7 @@ openfaas:
   gatewayservice: "gateway" # Service of OpenFaaS Gateway, "gateway" (default)
   gatewayport: 8080 # Port of service of OpenFaaS Gateway
   gatewaynamespace: "openfaas" # Namespace of OpenFaaS Gateway, "openfaas" (default)
-  kubeconfig: "~/.kube/config" # Kubeconfig file to use (only if falcosidekick is running outside the cluster)
+  kubeconfig: "~/.kube/config" # Kubeconfig file to use (only if sidekick is running outside the cluster)
   # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
 
@@ -512,7 +463,7 @@ wavefront:
   endpointhost: "" # Wavefront endpoint address (only the host). If not empty, with endpointhost, Wavefront output is enabled
   endpointmetricport: 2878 # Wavefront endpoint port when type is 'proxy'
   endpointtoken: "" # Wavefront token. Must be used only when endpointtype is 'direct'
-  metricname: "falco.alert" # Metric to be created in Wavefront. Defaults to falco.alert
+  metricname: "kubearmor.alert" # Metric to be created in Wavefront. Defaults to kubearmor.alert
   batchsize: 10000 # max batch of data sent per flush interval. defaults to 10,000. Used only in direct mode
   flushintervalseconds: 1 # Time in seconds between flushing metrics to Wavefront. Defaults to 1s
   # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
@@ -548,7 +499,7 @@ grafanaoncall:
 
 policyreport:
   enabled: false  # if true; policyreport output is enabled
-  kubeconfig: "~/.kube/config"  # Kubeconfig file to use (only if falcosidekick is running outside the cluster)
+  kubeconfig: "~/.kube/config"  # Kubeconfig file to use (only if sidekick is running outside the cluster)
   minimumpriority: "debug" # events with a priority above this are mapped to fail in PolicyReport Summary and lower that those are mapped to warn (default="")
   maxevents: 1000 # the max number of events that can be in a policyreport (default: 1000)
   prunebypriority: false # if true; the events with lowest severity are pruned first, in FIFO order (default: false)
@@ -562,7 +513,7 @@ yandex:
   # region: "" # yandex storage region (default: ru-central-1)
   s3:
     # endpoint: "" # yandex storage endpoint (default: https://storage.yandexcloud.net)
-    # bucket: "falcosidekick" # Yandex storage, bucket name
+    # bucket: "sidekick" # Yandex storage, bucket name
     # prefix: "" # name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json
     # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug
   datastreams:
@@ -579,7 +530,7 @@ syslog:
 
 mqtt:
   broker: "" # Broker address, can start with tcp:// or ssl://, if not empty, MQTT output is enabled
-  # topic: "falco/events" # Topic for messages (default: falco/events)
+  # topic: "kubearmor/events" # Topic for messages (default: kubearmor/events)
   # qos: 0 # QOS for messages (default: 0)
   # retained: false # If true, messages are retained (default: false)
   # user: "" # User if the authentication is enabled in the broker
@@ -589,7 +540,7 @@ mqtt:
 
 zincsearch:
   # hostport: "" # http://{domain or ip}:{port}, if not empty, ZincSearch output is enabled
-  # index: "falco" # index (default: falco)
+  # index: "kubearmor" # index (default: kubearmor)
   # username: "" # use this username to authenticate to ZincSearch (default: "")
   # password: "" # use this password to authenticate to ZincSearch (default: "")
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
@@ -612,7 +563,7 @@ spyderbat:
   # orguid: "" # Organization to send output to, if not empty, Spyderbat output is enabled
   # apikey: "" # Spyderbat API key with access to the organization
   # apiurl: "https://api.spyderbat.com" # Spyderbat API url (default: "https://api.spyderbat.com")
-  # source: "falcosidekick" # Spyderbat source ID, max 32 characters (default: "falcosidekick")
+  # source: "sidekick" # Spyderbat source ID, max 32 characters (default: "sidekick")
   # sourcedescription: "" # Spyderbat source description and display name if not empty, max 256 characters
   # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
@@ -622,14 +573,14 @@ timescaledb:
   # user: "postgres" # Username to authenticate with TimescaleDB (default: postgres)
   # password: "postgres" # Password to authenticate with TimescaleDB (default: postgres)
   # database: "" # TimescaleDB database used
-  # hypertablename: "falco_events" # Hypertable to store data events (default: falco_events) See TimescaleDB setup for more info
+  # hypertablename: "kubearmor_events" # Hypertable to store data events (default: kubearmor_events) See TimescaleDB setup for more info
   # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 redis:
   # address: "" # Redis address, if not empty, Redis output is enabled
   # password: "" # Password to authenticate with Redis (default: "")
   # database: "" # Redis database number (default: 0)
   # storagetype: "" # Redis storage type: hashmap or list (default: list)
-  # key: "" # Redis storage key name for hashmap, list(default: "falco")
+  # key: "" # Redis storage key name for hashmap, list(default: "kubearmor")
   # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
 telegram:
@@ -650,7 +601,7 @@ n8n:
 openobserve:
   # hostport: "" # http://{domain or ip}:{port}, if not empty, OpenObserve output is enabled
   # organizationName: "default" # Organization name (default: default)
-  # streamName: "falco" # Stream name (default: falco)
+  # streamName: "kubearmor" # Stream name (default: kubearmor)
   # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # mutualtls: false # if true, checkcert flag will be ignored (server cert will always be checked)
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
@@ -666,15 +617,6 @@ dynatrace:
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
 ```
 
-Usage :
-
-```bash
-usage: falcosidekick [<flags>]
-
-Flags:
-      --help                     Show context-sensitive help (also try --help-long and --help-man).
-  -c, --config-file=CONFIG-FILE  config file
-```
 
 #### Env vars
 
@@ -684,13 +626,13 @@ override these from _yaml file_.
 The _env vars_ "match" field names in \*yaml file with this structure (**take
 care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 
-- **LISTENADDRESS** : ip address to bind falcosidekick to (default: "" meaning all addresses)
+- **LISTENADDRESS** : ip address to bind sidekick to (default: "" meaning all addresses)
 - **LISTENPORT** : port to listen for daemon (default: `2801`)
 - **DEBUG** : if _true_ all outputs will print in stdout the payload they send
   (default: false)
-- **CUSTOMFIELDS** : a list of comma separated custom fields to add to falco, if the value starts with % the relative env var is used
+- **CUSTOMFIELDS** : a list of comma separated custom fields to add to kubearmor, if the value starts with % the relative env var is used
   events, syntax is "key:value,key:value"
-- **TEMPLATEDFIELDS** : templated fields are added to falco events and metrics, it uses Go template + output_fields values
+- **TEMPLATEDFIELDS** : templated fields are added to kubearmor events and metrics, it uses Go template + output_fields values
 - **BRACKETREPLACER** : if not empty, the brackets in keys of Output Fields are replaced
 - **MUTUALTLSFILESPATH**: path which will be used to stored certs and key for mutual TLS authentication, will be deprecated in the future (default: "/etc/certs")
 - **MUTUALTLSCLIENT_CERTFILE**: client certification file for mutual TLS client certification, takes priority over MUTUALTLSFILESPATH if not empty
@@ -707,7 +649,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **SLACK_CHANNEL** : Slack Channel (optionnal)
 - **SLACK_FOOTER** : Slack footer
 - **SLACK_ICON** : Slack icon (avatar)
-- **SLACK_USERNAME** : Slack username (default: `Falcosidekick`)
+- **SLACK_USERNAME** : Slack username (default: `sidekick`)
 - **SLACK_OUTPUTFORMAT** : `all` (default), `text` (only text is displayed in
   Slack), `fields` (only fields are displayed in Slack)
 - **SLACK_MINIMUMPRIORITY** : minimum priority of event for using use this
@@ -720,7 +662,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **ROCKETCHAT_WEBHOOKURL** : Rocketchat Webhook URL (ex:
   https://XXXX/hooks/YYYY), if not `empty`, Rocketchat output is _enabled_
 - **ROCKETCHAT_ICON** : Rocketchat icon (avatar)
-- **ROCKETCHAT_USERNAME** : Rocketchat username (default: `Falcosidekick`)
+- **ROCKETCHAT_USERNAME** : Rocketchat username (default: `Sidekick`)
 - **ROCKETCHAT_OUTPUTFORMAT** : `all` (default), `text` (only text is displayed
   in Rocketchat), `fields` (only fields are displayed in Rocketchat)
 - **ROCKETCHAT_MINIMUMPRIORITY** : minimum priority of event for using use this
@@ -739,7 +681,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
   https://XXXX/hooks/YYYY), if not `empty`, Mattermost output is _enabled_
 - **MATTERMOST_FOOTER** : Mattermost footer
 - **MATTERMOST_ICON** : Mattermost icon (avatar)
-- **MATTERMOST_USERNAME** : Mattermost username (default: `Falcosidekick`)
+- **MATTERMOST_USERNAME** : Mattermost username (default: `Sidekick`)
 - **MATTERMOST_OUTPUTFORMAT** : `all` (default), `text` (only text is displayed
   in Mattermost), `fields` (only fields are displayed in Mattermost)
 - **MATTERMOST_MINIMUMPRIORITY** : minimum priority of event for using use this
@@ -786,22 +728,22 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
   `false`)
 - **ALERTMANAGER_CHECKCERT** : check if ssl certificate of the output is valid (default:
   `true`)
-- **ALERTMANAGER_ENDPOINT** : alertmanager endpoint on which falcosidekick posts alerts, choice is:
+- **ALERTMANAGER_ENDPOINT** : alertmanager endpoint on which Sidekick posts alerts, choice is:
   `"/api/v1/alerts" or "/api/v2/alerts" , default is "/api/v1/alerts"`
 - **ALERTMANAGER_EXPIRESAFTER** : if set to a non-zero value, alert expires after that time in seconds (default: 0)
 - **ALERTMANAGER_EXTRALABELS** : comma separated list of labels composed of a ':' separated name and value that is 
   added to the Alerts. Example: `my_label_1:my_value_1, my_label_1:my_value_2` (default: `""`)
 - **ALERTMANAGER_EXTRAANNOTATIONS** : comma separated list of annotations composed of a ':' separated name and
   value that is added to the Alerts. Example: `my_annotation_1:my_value_1, my_annotation_1:my_value_2` (default: `""`)
-- **ALERTMANAGER_CUSTOMSEVERITYMAP** : comma separated list of tuple composed of a ':' separated Falco priority and
-  Alertmanager severity that is used to override the severity label associated to the priority level of falco event.
+- **ALERTMANAGER_CUSTOMSEVERITYMAP** : comma separated list of tuple composed of a ':' separated kubearmor priority and
+  Alertmanager severity that is used to override the severity label associated to the priority level of kubearmor event.
   Example: `debug:value_1,critical:value2`. Default mapping (priority:severity): `emergency:critical,alert:critical,critical:critical,error:warning,warning:warning,notice:information,informational:information,debug:information` (default: `""`)
 - **ALERTMANAGER_DROPEVENTDEFAULTPRIORITY** : default priority of dropped events, values are emergency|alert|critical|error|warning|notice|informational|debug (default: `"critical"`)
 - **ALERTMANAGER_DROPEVENTTHRESHOLDS** : comma separated list of priority re-evaluation thresholds of dropped events composed of a ':' separated integer threshold and
   string priority. Example: `10000:critical, 100:warning, 1:informational` (default: `"10000:critical, 1000:critical, 100:critical, 10:warning, 1:warning"`)
 - **ELASTICSEARCH_HOSTPORT** : Elasticsearch http://host:port, if not `empty`,
   Elasticsearch is _enabled_
-- **ELASTICSEARCH_INDEX** : Elasticsearch index (default: falco)
+- **ELASTICSEARCH_INDEX** : Elasticsearch index (default: kubearmor)
 - **ELASTICSEARCH_TYPE** : Elasticsearch document type (default: _doc)
 - **ELASTICSEARCH_MINIMUMPRIORITY** : minimum priority of event for using this
   output, order is
@@ -820,10 +762,10 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
   syntax is "key:value,key:value"
 - **INFLUXDB_HOSTPORT** : Influxdb http://host:port, if not `empty`, Influxdb is
   _enabled_
-- **INFLUXDB_DATABASE** : Influxdb database (default: falco)
-- **INFLUXDB_ORGANIZATION** : Influxdb database (api v1 only) (default: falco)
+- **INFLUXDB_DATABASE** : Influxdb database (default: kubearmor)
+- **INFLUXDB_ORGANIZATION** : Influxdb database (api v1 only) (default: accuknox)
 - **INFLUXDB_BUCKET** : Influxdb organization
-- **INFLUXDB_USER** : bucket (default: falco)
+- **INFLUXDB_USER** : bucket (default: kubearmor)
 - **INFLUXDB_PASSWORD** : user to use if auth is enabled in Influxdb
 - **INFLUXDB_TOKEN** : API token to use if auth in enabled in Influxdb (disables user and password)
 - **INFLUXDB_PRECISION** : write precision
@@ -891,7 +833,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **AWS_CLOUDWATCHLOGS_LOGGROUP** : AWS CloudWatch Logs Group name, if not
   empty, CloudWatch Logs output is enabled
 - **AWS_CLOUDWATCHLOGS_LOGSTREAM** : AWS CloudWatch Logs Stream name, if empty,
-  FalcoSideKick will try to create a log stream
+  SideKick will try to create a log stream
 - **AWS_CLOUDWATCHLOGS_MINIMUMPRIORITY** : minimum priority of event for using
   this output, order is
   `emergency|alert|critical|error|warning|notice|informational|debug or "" (default)`
@@ -936,10 +878,10 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **PROMETHEUS_EXTRALABELS**: comma separated list of fields to use as labels additionally to rule, source, priority, tags and custom_fields
 - **STATSD_FORWARDER**: The address for the StatsD forwarder, in the form
   http://host:port, if not empty StatsD is _enabled_
-- **STATSD_NAMESPACE**: A prefix for all metrics (default: "falcosidekick.")
+- **STATSD_NAMESPACE**: A prefix for all metrics (default: "kubearmor.")
 - **DOGSTATSD_FORWARDER**: The address for the DogStatsD forwarder, in the form
   http://host:port, if not empty DogStatsD is _enabled_
-- **DOGSTATSD_NAMESPACE**: A prefix for all metrics (default: falcosidekick."")
+- **DOGSTATSD_NAMESPACE**: A prefix for all metrics (default: kubearmor."")
 - **DOGSTATSD_TAGS**: A comma-separated list of tags to add to all metrics
 - **WEBHOOK_ADDRESS** : Webhook address, if not empty, Webhook output is
   _enabled_
@@ -1060,7 +1002,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
   _enabled_
 - **KUBELESS_NAMESPACE**: Namespace of Kubeless function (mandatory)
 - **KUBELESS_PORT**: Port of service of Kubeless function (default is `8080`)
-- **KUBELESS_KUBECONFIG**: Kubeconfig file to use (only if falcoside is running
+- **KUBELESS_KUBECONFIG**: Kubeconfig file to use (only if sidekick is running
   outside the cluster)
 - **KUBELESS_MINIMUMPRIORITY**: "debug" # minimum priority of event for using
   this output, order is
@@ -1072,7 +1014,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **OPENFAAS_FUNCTIONNAME** : Name of OpenFaaS function, if not empty, OpenFaaS is enabled
 - **OPENFAAS_FUNCTIONNAMESPACE** : # Namespace of OpenFaaS function, "openfaas-fn" (default)
 - **OPENFAAS_GATEWAYPORT** : Port of service of OpenFaaS Gateway
-- **OPENFAAS_KUBECONFIG** : Kubeconfig file to use (only if falcoside is running
+- **OPENFAAS_KUBECONFIG** : Kubeconfig file to use (only if sidekick is running
   outside the cluster)
 - **OPENFAAS_MINIMUMPRIORITY** : "debug" # minimum priority of event for using
   this output, order is
@@ -1091,7 +1033,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **WAVEFRONT_ENDPOINTMETRICPORT**: Wavefront endpoint port when type is 'proxy'
 - **WAVEFRONT_FLUSHINTERVALSECONDS**: Time in seconds between flushing metrics to Wavefront. Defaults to 1s
 - **WAVEFRONT_BATCHSIZE**: Max batch of data sent per flush interval. Used only in direct mode. Defaults to 10000.
-- **WAVEFRONT_METRICNAME**: "falco.alert" # Metric name to be created/used in Wavefront
+- **WAVEFRONT_METRICNAME**: "kubearmor.alert" # Metric name to be created/used in Wavefront
 - **WAVEFRONT_MINIMUMPRIORITY**: "debug" # minimum priority of event for using
   this output, order is `emergency|alert|critical|error|warning|notice|informational|debug or "" (default)`
 - **FISSION_FUNCTION**: Name of Fission function, if not empty, Fission is enabled
@@ -1136,12 +1078,12 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **SYSLOG_FORMAT**: Syslog payload format. It can be either "json" or "cef" (default: json)
 - **SYSLOG_MINIMUMPRIORITY**: minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default: "debug")
 - **POLICYREPORT_ENABLED**: if true policyreport output is enabled (default: `false`)
-- **POLICYREPORT_KUBECONFIG**: Kubeconfig file to use (only if falcosidekick is running outside the cluster)
+- **POLICYREPORT_KUBECONFIG**: Kubeconfig file to use (only if Sidekick is running outside the cluster)
 - **POLICYREPORT_MINIMUMPRIORITY**: events with priority above this are mapped to fail in PolicyReport summary and lower that those are mapped to warn 
 - **POLICYREPORT_MAXEVENTS**: the max number of events that can be per report (default: 1000)
 - **POLICYREPORT_PRUNEBYPRIORITY**: if true; the events with lowest severity are pruned first, in FIFO order (default: `false`)
 - **MQTT_BROKER**: broker address, can start with `tcp://` or `ssl://`, if not empty, MQTT output is enabled
-- **MQTT_TOPIC**: topic for messages (default: `falco/events`)
+- **MQTT_TOPIC**: topic for messages (default: `kubearmor/events`)
 - **MQTT_QOS**: QOS for messages (default: `0`)
 - **MQTT_RETAINED**: if `true`, messages are retained (default: `false`)
 - **MQTT_USER**: user if the authentication is enabled in the broker
@@ -1149,7 +1091,7 @@ care of lower/uppercases**) : `yaml: a.b --> envvar: A_B` :
 - **MQTT_CHECKCERT**: check if ssl certificate of the output is valid (default: `true`)
 - **MQTT_PRUNEBYPRIORITY**: if true; the events with lowest severity are pruned first, in FIFO order (default: `false`)
 - **ZINC_HOSTPORT**: http://{domain or ip}:{port}, if not empty, ZincSearch output is enabled
-- **ZINC_INDEX**: index (default: falco)
+- **ZINC_INDEX**: index (default: kubearmor)
 - **ZINC_USERNAME**: this username to authenticate to ZincSearch (default: "")
 - **ZINC_PASSWORD**: use this password to authenticate to ZincSearch (default: "")
 - **ZINC_CHECKCERT**: if ssl certificate of the output is valid (default: true)
@@ -1168,7 +1110,7 @@ order is
 - **SPYDERBAT_ORGUID**: Organization to send output to, if not empty, Spyderbat output is enabled
 - **SPYDERBAT_APIKEY**: Spyderbat API key with access to the organization
 - **SPYDERBAT_APIURL**: Spyderbat API url (default: "https://api.spyderbat.com")
-- **SPYDERBAT_SOURCE**: Spyderbat source ID, max 32 characters (default: "falcosidekick")
+- **SPYDERBAT_SOURCE**: Spyderbat source ID, max 32 characters (default: "Sidekick")
 - **SPYDERBAT_SOURCEDESCRIPTION**: Spyderbat source description and display name if not empty, max 256 characters
 - **SPYDERBAT_MINIMUMPRIORITY**: minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 - **TIMESCALEDB_HOST**: TimescaleDB host, if not empty, TImescaleDB output is enabled
@@ -1176,13 +1118,13 @@ order is
 - **TIMESCALEDB_USER**: Username to authenticate with TimescaleDB (default: postgres)
 - **TIMESCALEDB_PASSWORD**: Password to authenticate with TimescaleDB (default: postgres)
 - **TIMESCALEDB_DATABASE**: TimescaleDB database used
-- **TIMESCALEDB_HYPERTABLENAME**: Hypertable to store data events (default: falco_events) See TimescaleDB setup for more info
+- **TIMESCALEDB_HYPERTABLENAME**: Hypertable to store data events (default:kubearmor_events) See TimescaleDB setup for more info
 - **TIMESCALEDB_MINIMUMPRIORITY**: minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 - **REDIS_ADDRESS**: Redis host, if not empty, Redis output is enabled (example: localhost:6379)
 - **REDIS_PASSWORD**: Password to authenticate with Redis (default: "")
 - **REDIS_DATABASE**: Redis database number (default: 0)
 - **REDIS_STORAGE**: Redis storage type: hashmap or list (default: "list")
-- **REDIS_Key**: Redis storage key name for hashmap, list(default: "falco")
+- **REDIS_Key**: Redis storage key name for hashmap, list(default: "kubearmor")
 - **REDIS_MINIMUMPRIORITY**: minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 - **TELEGRAM_TOKEN**: telegram bot authentication token
 - **TELEGRAM_CHATID**: telegram Identifier of the shared chat
@@ -1196,7 +1138,7 @@ order is
 - **OPENOBSERVE_HOSTPORT** : Elasticsearch http://host:port, if not `empty`,
   OpenObserve is _enabled_
 - **OPENOBSERVE_ORGANIZATIONNAME** : Organization name (default: default)
-- **OPENOBSERVE_STREAMNAME** : Stream name (default: falco)
+- **OPENOBSERVE_STREAMNAME** : Stream name (default: kubearmor)
 - **OPENOBSERVE_MINIMUMPRIORITY** : minimum priority of event for using this
   output, order is
   `emergency|alert|critical|error|warning|notice|informational|debug or "" (default)`
@@ -1221,11 +1163,11 @@ order is
 The `SLACK_MESSAGEFORMAT` environment variable and `slack.messageformat` YAML
 value accept a [Go template](https://golang.org/pkg/text/template/) which can be
 used to format the text of a slack alert. These templates are evaluated on the
-JSON data from each Falco event - the following fields are available:
+JSON data from each event - the following fields are available:
 
 | Template Syntax                              | Description                                                                                                                                                        |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `{{ .Output }}`                              | A formatted string from Falco describing the event.                                                                                                                |
+| `{{ .Output }}`                              | A formatted string from Kubearmor describing the event.                                                                                                                |
 | `{{ .Priority }}`                            | The priority of the event, as a string.                                                                                                                            |
 | `{{ .Rule }}`                                | The name of the rule that generated the event.                                                                                                                     |
 | `{{ .Time }}`                                | The timestamp when the event occurred.                                                                                                                             |
@@ -1233,23 +1175,6 @@ JSON data from each Falco event - the following fields are available:
 
 Go templates also support some basic methods for text manipulation which can be
 used to improve the clarity of alerts - see the documentation for details.
-
-## Handlers
-
-Different URI (handlers) are available :
-
-- `/` : main and default handler, your falco config must be configured to use it
-- `/ping` : you will get a `pong` as answer, useful to test if falcosidekick is
-  running and its port is opened (for healthcheck purpose for example). This
-  endpoint is deprecated and it will be removed in `3.0.0`.
-- `/healthz`: you will get a HTTP status code `200` response as answer, useful
-  to test if falcosidekick is running and its port is opened (for healthcheck or
-  purpose for example)
-- `/test` : (for debug only) send a test event to all enabled outputs.
-- `/debug/vars` : get statistics from daemon (in JSON format), it uses classic
-  `expvar` package and some custom values are added
-- `/metrics` : prometheus endpoint, for scraping metrics about events and
-  `falcosidekick`
 
 ## Logs
 
@@ -1264,13 +1189,13 @@ All logs are sent to `stdout`.
 Outputs with `mutualtls` enabled in their configuration require the *client.crt*, *client.key* and *ca.crt* filepaths to be configured in the **mutualtlsclient_certfile**, **mutualtlsclient_keyfile** and  **mutualtlsclient_cacertfile** global parameter.
 
 ```bash
-docker run -d -p 2801:2801 -e MUTUALTLSCLIENT_CERTFILE=/etc/certs/client/client.crt -e MUTUALTLSCLIENT_KEYFILE=/etc/certs/client/client.key -e MUTUALTLSCLIENT_CACERTFILE=/etc/certs/client/ca.crt -e ALERTMANAGER_HOSTPORT=https://XXXX -e ALERTMANAGER_MUTUALTLS=true -e INFLUXDB_HOSTPORT=https://XXXX -e INFLUXDB_MUTUALTLS=true -e WEBHOOK_ADDRESS=XXXX -v /localpath/myclientcert.crt:/etc/certs/client/client.crt -v /localpath/myclientkey.key:/etc/certs/client/client.key -v /localpath/ca.crt:/etc/certs/client/ca.crt falcosecurity/falcosidekick
+docker run -d -p 2801:2801 -e MUTUALTLSCLIENT_CERTFILE=/etc/certs/client/client.crt -e MUTUALTLSCLIENT_KEYFILE=/etc/certs/client/client.key -e MUTUALTLSCLIENT_CACERTFILE=/etc/certs/client/ca.crt -e ALERTMANAGER_HOSTPORT=https://XXXX -e ALERTMANAGER_MUTUALTLS=true -e INFLUXDB_HOSTPORT=https://XXXX -e INFLUXDB_MUTUALTLS=true -e WEBHOOK_ADDRESS=XXXX -v /localpath/myclientcert.crt:/etc/certs/client/client.crt -v /localpath/myclientkey.key:/etc/certs/client/client.key -v /localpath/ca.crt:/etc/certs/client/ca.crt kubearmor/sidekick
 ```
 
 Alternately the path where the *client.crt*, *client.key* and *ca.crt* files are stored can be configured in **mutualtlsfilespath** global parameter. (**Important**: file names must be preserved)
 
 ```bash
-docker run -d -p 2801:2801 -e MUTUALTLSFILESPATH=/etc/certs -e ALERTMANAGER_HOSTPORT=https://XXXX -e ALERTMANAGER_MUTUALTLS=true -e INFLUXDB_HOSTPORT=https://XXXX -e INFLUXDB_MUTUALTLS=true -e WEBHOOK_ADDRESS=XXXX -v /localpath/myclientcert.crt:/etc/certs/client.crt -v /localpath/myclientkey.key:/etc/certs/client.key -v /localpath/ca.crt:/etc/certs/ca.crt falcosecurity/falcosidekick
+docker run -d -p 2801:2801 -e MUTUALTLSFILESPATH=/etc/certs -e ALERTMANAGER_HOSTPORT=https://XXXX -e ALERTMANAGER_MUTUALTLS=true -e INFLUXDB_HOSTPORT=https://XXXX -e INFLUXDB_MUTUALTLS=true -e WEBHOOK_ADDRESS=XXXX -v /localpath/myclientcert.crt:/etc/certs/client.crt -v /localpath/myclientkey.key:/etc/certs/client.key -v /localpath/ca.crt:/etc/certs/ca.crt kubearmor/sidekick
 ```
 
 In above example, the same client certificate will be used for both Alertmanager & InfluxDB outputs which have mutualtls flag set to true.
@@ -1282,8 +1207,8 @@ In above example, the same client certificate will be used for both Alertmanager
 The daemon exposes the common _Golang_ metrics and some custom values in JSON
 format. It's useful for monitoring purpose.
 
-![expvar json](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/expvar_json.png)
-![expvarmon](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/expvarmon.png)
+![expvar json](https://github.com/kubearmor/sidekick/raw/master/imgs/expvar_json.png)
+![expvarmon](https://github.com/kubearmor/sidekick/raw/master/imgs/expvarmon.png)
 
 ### Prometheus
 
@@ -1292,7 +1217,7 @@ The daemon exposes a `prometheus` endpoint on URI `/metrics`.
 ### StatsD / DogStatsD
 
 The daemon is able to push its metrics to a StatsD/DogstatsD server. See
-[Configuration](https://github.com/falcosecurity/falcosidekick#configuration)
+[Configuration](https://github.com/kubearmor/sidekick#configuration)
 section for how-to.
 
 ### AWS Policy example
@@ -1381,7 +1306,7 @@ permissions to access the resources you selected to use, like `SQS`, `Lambda`,
 To use TimescaleDB you should create the Hypertable first, following this example
 
 ```sql
-CREATE TABLE falcosidekick_events (
+CREATE TABLE sidekick_events (
 	time TIMESTAMPTZ NOT NULL,
 	rule TEXT,
 	priority VARCHAR(20),
@@ -1390,7 +1315,7 @@ CREATE TABLE falcosidekick_events (
 	tags TEXT,
 	hostname TEXT,
 );
-SELECT create_hypertable('falcosidekick_events', 'time');
+SELECT create_hypertable('sidekick_events', 'time');
 ```
 
 To support [`customfields` or `templatedfields`](#yaml-file) you need to ensure you add the corresponding fields to the Hypertable, for example:
@@ -1403,7 +1328,7 @@ templatedfields:
 ```
 
 ```sql
-CREATE TABLE falcosidekick_events (
+CREATE TABLE sidekick_events (
 	time TIMESTAMPTZ NOT NULL,
 	rule TEXT,
 	priority VARCHAR(20),
@@ -1414,70 +1339,60 @@ CREATE TABLE falcosidekick_events (
 	custom_field_1 TEXT,
 	k8s_namespace TEXT
 );
-SELECT create_hypertable('falcosidekick_events', 'time');
+SELECT create_hypertable('sidekick_events', 'time');
 ```
 
 The name from the table should match with the `hypertable` output configuration. The TimescaleDB output processor will insert SQL nulls when it encounters a string field value of `"null"`.
-
-## Examples
-
-Run you daemon and try (from Falco's documentation) :
-
-```bash
-curl -XPOST "http://localhost:2801/" -d'{"output":"16:31:56.746609046: Error File below a known binary directory opened for writing (user=root command=touch /bin/hack file=/bin/hack)","priority":"Error","rule":"Write below binary dir","time":"2019-05-17T15:31:56.746609046Z", "output_fields": {"evt.time":1507591916746609046,"fd.name":"/bin/hack","proc.cmdline":"touch /bin/hack","user.name":"root"}}'
-```
-
-You should get :
 
 ### Slack
 
 (SLACK_OUTPUTFORMAT="**all**")
 
-![slack example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/slack.png)
+![slack example](https://github.com/kubearmor/sidekick/raw/master/imgs/slack.png)
 
 (SLACK_OUTPUTFORMAT="**text**")
 
-![slack no fields example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/slack_no_fields.png)
+![slack no fields example](https://github.com/kubearmor/sidekick/raw/master/imgs/slack_no_fields.png)
 
 (SLACK_OUTPUTFORMAT="**fields**" and SLACK_MESSAGEFORMAT="**Alert :
 rule \*{{ .Rule }}\* triggered by
 user \*{{ index .OutputFields \"user.name\" }}\***")
 
-![slack message format example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/slack_fields_messageformat.png)
+![slack message format example](https://github.com/kubearmor/sidekick/raw/master/imgs/slack_fields_messageformat.png)
 
 ### Mattermost
 
-![mattermost example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/mattermost.png)
+![mattermost example](https://github.com/kubearmor/sidekick/raw/master/imgs/mattermost.png)
 
 ### Teams
 
 (TEAMS_OUTPUTFORMAT="**all**")
 
-![teams example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/teams.png)
+![teams example](https://github.com/kubearmor/sidekick/raw/master/imgs/teams.png)
 
 (TEAMS_OUTPUTFORMAT="**text**")
 
-![teams facts only](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/teams_text.png)
+![teams facts only](https://github.com/kubearmor/sidekick/raw/master/imgs/teams_text.png)
 
 ### Datadog
 
-_(Tip: filter on `sources: falco`)_
+_(Tip: filter on `sources: kubearmor`)_
 
-![datadog example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/datadog.png)
+![datadog example](https://github.com/kubearmor/sidekick/raw/master/imgs/datadog.png)
 
 ### AlertManager
 
-![alertmanager example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/alertmanager.png)
+![alertmanager example](https://github.com/kubearmor/sidekick/raw/master/imgs/alertmanager.png)
 
 ### Elasticsearch (with Kibana)
 
-![kibana example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/kibana.png)
+![kibana example](https://github.com/kubearmor/sidekick/raw/master/imgs/kibana.png)
 
 ### Influxdb
 
 ```bash
-> use falco
-Using database falco
+> use kubearmor
+Using database kubearmor
 > show series
 key
 ---
@@ -1487,49 +1402,49 @@ events,akey=A_Value,bkey=B_Value,ckey=C_Value,priority=Debug,rule=Test_rule
 name: events
 time                akey    bkey    ckey    priority rule      value
 ----                ----    ----    ----    -------- ----      -----
-1560433816893368400 AValue  BValue  CValue  Debug    Testrule  This is a test from falcosidekick
-1560441359119741800 A_Value B_Value C_Value Debug    Test_rule This is a test from falcosidekick
+1560433816893368400 AValue  BValue  CValue  Debug    Testrule  This is a test from sidekick
+1560441359119741800 A_Value B_Value C_Value Debug    Test_rule This is a test from sidekick
 ```
 
 ### Loki (with Grafana)
 
-![loki example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/loki.png)
+![loki example](https://github.com/kubearmor/sidekick/raw/master/imgs/loki.png)
 
 ### AWS SQS
 
-![aws sqs example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/aws_sqs.png)
+![aws sqs example](https://github.com/kubearmor/sidekick/raw/master/imgs/aws_sqs.png)
 
 ### SMTP
 
 (SMTP_OUTPUTFORMAT="**html**")
 
-![smtp html example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/smtp_html.png)
+![smtp html example](https://github.com/kubearmor/sidekick/raw/master/imgs/smtp_html.png)
 
 (SMTP_OUTPUTFORMAT="**text**")
 
-![smtp plaintext example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/smtp_plaintext.png)
+![smtp plaintext example](https://github.com/kubearmor/sidekick/raw/master/imgs/smtp_plaintext.png)
 
 ### Opsgenie
 
-![opsgenie example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/opsgenie.png)
+![opsgenie example](https://github.com/kubearmor/sidekick/raw/master/imgs/opsgenie.png)
 
 ### Discord
 
-![discord example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/discord.png)
+![discord example](https://github.com/kubearmor/sidekick/raw/master/imgs/discord.png)
 
 ### Google Chat
 
 (GOOGLECHAT_OUTPUTFORMAT="**all**")
 
-![google chat example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/google_chat_no_fields.png)
+![google chat example](https://github.com/kubearmor/sidekick/raw/master/imgs/google_chat_no_fields.png)
 
 (GOOGLECHAT_OUTPUTFORMAT="**text**")
 
-![google chat text example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/google_chat_example.png)
+![google chat text example](https://github.com/kubearmor/sidekick/raw/master/imgs/google_chat_example.png)
 
 ### Dynatrace
 
-![Dynatrace example](https://github.com/falcosecurity/falcosidekick/raw/master/imgs/dynatrace.png)
+![Dynatrace example](https://github.com/kubearmor/sidekick/raw/master/imgs/dynatrace.png)
 
 ## Installing Policy Report Custom Resource Definition (CRD)
 
@@ -1541,7 +1456,7 @@ Information about how to find and install the CRD for the reports can be found [
 ### Build
 
 ```bash
-make falcosidekick
+make sidekick
 ```
 
 ### Quicktest

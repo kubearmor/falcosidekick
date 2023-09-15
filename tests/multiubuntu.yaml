@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: multiubuntu
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-1-deployment
+  namespace: multiubuntu
+  labels:
+    deployment: ubuntu-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      group: group-1
+      container: ubuntu-1
+  template:
+    metadata:
+      labels:
+        group: group-1
+        container: ubuntu-1
+    spec:
+      containers:
+        - name: ubuntu-1-container
+          image: kubearmor/ubuntu-w-utils:0.1
+          securityContext:
+            capabilities:
+              add: ["AUDIT_WRITE", "NET_RAW","SYS_CHROOT","MKNOD","SETFCAP"]

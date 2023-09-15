@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/falcosecurity/falcosidekick/types"
+	"github.com/kubearmor/sidekick/types"
 )
 
 // NewYandexClient returns a new output.Client for accessing the Yandex API.
@@ -62,8 +62,8 @@ func NewYandexClient(config *types.Configuration, stats *types.Statistics, promS
 }
 
 // UploadYandexS3 uploads payload to Yandex S3
-func (c *Client) UploadYandexS3(falcopayload types.FalcoPayload) {
-	f, _ := json.Marshal(falcopayload)
+func (c *Client) UploadYandexS3(kubearmorpayload types.KubearmorPayload) {
+	f, _ := json.Marshal(kubearmorpayload)
 	prefix := ""
 	t := time.Now()
 	if c.Config.Yandex.S3.Prefix != "" {
@@ -89,10 +89,10 @@ func (c *Client) UploadYandexS3(falcopayload types.FalcoPayload) {
 }
 
 // UploadYandexDataStreams uploads payload to Yandex Data Streams
-func (c *Client) UploadYandexDataStreams(falcoPayLoad types.FalcoPayload) {
+func (c *Client) UploadYandexDataStreams(kubearmorpayload types.KubearmorPayload) {
 	svc := kinesis.New(c.AWSSession)
 
-	f, _ := json.Marshal(falcoPayLoad)
+	f, _ := json.Marshal(kubearmorpayload)
 	input := &kinesis.PutRecordInput{
 		Data:         f,
 		PartitionKey: aws.String(uuid.NewString()),
