@@ -32,6 +32,9 @@ jobs:
           chmod +x install_k3s.sh
           /bin/bash ./install_k3s.sh
  
+      - name: Build Docker image
+        run: docker build -t kubearmor/sidekick:latest .
+
       - name: Add Helm Repository 
         run: |
           helm repo add kubearmor https://kubearmor.github.io/charts
