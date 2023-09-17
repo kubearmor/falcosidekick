@@ -2,20 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: deimos-deployment
+  name: sidekick-deployment
 spec:
   selector:
     matchLabels:
-      kubearmor-app: deimos
+      kubearmor-app: sidekick
   template:
     metadata:
       labels:
-        kubearmor-app: deimos
+        kubearmor-app: sidekick
     spec:
-      serviceAccountName: deimos-serviceaccount
+      serviceAccountName: sidekick-serviceaccount
       containers:
-      - name: deimos-container
+      - name: sidekick-container
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         envFrom:
         - secretRef:
-            name: deimos-secret
+            name: sidekick-secret
