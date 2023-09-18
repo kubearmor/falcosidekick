@@ -10,6 +10,8 @@ jobs:
   build:
     name: Auto-testing Framework
     runs-on: ubuntu-latest
+    env:
+      RUNTIME: containerd
 
     steps:
       - uses: actions/checkout@v3
@@ -32,6 +34,18 @@ jobs:
           chmod +x install_k3s.sh
           /bin/bash ./install_k3s.sh
  
+      - name: Build Docker image
+        run: |
+          docker build -t kubearmor/sidekick:test .
+          sleep 5
+
+      - name: k3s thing 
+        run : sudo systemctl cat k3s
+
+      - name: save docker image
+        run: |
+          docker save kubearmor/sidekick:test | sudo k3s ctr images import -
+
       - name: Add Helm Repository 
         run: |
           helm repo add kubearmor https://kubearmor.github.io/charts
@@ -69,10 +83,10 @@ jobs:
           kubectl apply -f ./tests/policy.yaml
           kubectl get pods -A
 
-      - name: Install deimos using Helm
+      - name: Install sidekick using Helm
         run: |
-          helm install deimos ./helm/deimos/ --set config.syslog.host=syslog-server-service.default.svc.cluster.local --set config.syslog.port=514 --set config.syslog.format=cef --set config.syslog.protocol=udp --set config.policyreport.enabled=true -n kube-system
-          sleep 10
+          helm install sidekick ./helm/sidekick/ --set image.repository=kubearmor/sidekick --set image.tag=test --set config.syslog.host=syslog-server-service.default.svc.cluster.local --set config.syslog.port=514 --set config.syslog.format=cef --set config.syslog.protocol=udp --set config.policyreport.enabled=true -n kube-system
+          sleep 15
           kubectl get pods -A
 
       - name: Test Sidekick using Ginkgo

@@ -13,15 +13,15 @@ extraVolumeMounts:
 extraVolumes:
   - name: my-secret-volume
     secret:
-      secretName: deimos-secret
+      secretName: sidekick-secret
 
 image:
   # -- The image registry to pull from
   registry: docker.io
   # -- The image repository to pull from
-  repository: gladium08/deimos
+  repository: kubearmor/sidekick
   # -- The image tag to pull
-  tag: new110
+  tag: latest
   # -- The image pull policy
   pullPolicy: Always
 
@@ -174,7 +174,7 @@ config:
   alertmanager:
     # -- AlertManager <http://host:port>, if not `empty`, AlertManager is *enabled*
     hostport: ""
-    # -- alertmanager endpoint on which deimos posts alerts, choice is: `"/api/v1/alerts" or "/api/v2/alerts" , default is "/api/v1/alerts"`
+    # -- alertmanager endpoint on which sidekick posts alerts, choice is: `"/api/v1/alerts" or "/api/v2/alerts" , default is "/api/v1/alerts"`
     endpoint: "/api/v1/alerts"
     # -- minimum priority of event to use this output, order is `emergency\|alert\|critical\|error\|warning\|notice\|informational\|debug or ""`
     minimumpriority: ""
@@ -290,7 +290,7 @@ config:
     checkcert: true
 
   aws:
-    # -- AWS IAM role ARN for deimos service account to associate with (optionnal if you use EC2 Instance Profile)
+    # -- AWS IAM role ARN for sidekick service account to associate with (optionnal if you use EC2 Instance Profile)
     rolearn: ""
     # -- External id for the role to assume (optional if you use EC2 Instance Profile)
     externalid: ""
@@ -305,7 +305,7 @@ config:
     cloudwatchlogs:
       # -- AWS CloudWatch Logs Group name, if not empty, CloudWatch Logs output is *enabled*
       loggroup: ""
-      # -- AWS CloudWatch Logs Stream name, if empty, deimos will try to create a log stream
+      # -- AWS CloudWatch Logs Stream name, if empty, sidekick will try to create a log stream
       logstream: ""
       # -- minimum priority of event to use this output, order is `emergency\|alert\|critical\|error\|warning\|notice\|informational\|debug or ""`
       minimumpriority: ""
@@ -702,7 +702,7 @@ config:
   policyreport:
     # -- if true; policyreport output is *enabled*
     enabled: false
-    # -- Kubeconfig file to use (only if deimos is running outside the cluster)
+    # -- Kubeconfig file to use (only if sidekick is running outside the cluster)
     kubeconfig: "~/.kube/config"
     # -- the max number of events that can be in a policyreport
     maxevents: 1000
@@ -896,7 +896,7 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-# -- The resources for deimos pods
+# -- The resources for sidekick pods
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
