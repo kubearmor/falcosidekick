@@ -1,0 +1,41 @@
+name: ci-latest-helm-chart-release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "helm/**"
+
+jobs:
+  publish-chart:
+    name: Update Stable Helm Chart With Latest Changes
+    if: ${{ (github.repository == 'kubearmor/sidekick') && (!contains(github.event.head_commit.message, '[skip ci]')) }}
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Chart.yaml
+        run: |
+          LATEST_VERSION=`cat LATEST-RELEASE`
+          sed -i -e "s/appVersion:.*/appVersion: $LATEST_VERSION/g" helm/sidekick/Chart.yaml
+          sed -i -e "s/version:.*/version: $LATEST_VERSION/g" helm/sidekick/Chart.yaml
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          # Access token which can push to a different repo in the same org
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          charts_dir: helm/
+          # repo where charts would be published
+          owner: kubearmor
+          repository: charts
+          branch: gh-pages
+          charts_url: https://kubearmor.github.io/charts
+          commit_username: "github-actions[bot]"
+          commit_email: "github-actions[bot]@users.noreply.github.com"
