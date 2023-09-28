@@ -12,6 +12,16 @@ forward them to different outputs in a fan-out way.
 It works as a single endpoint for as many as you want `kubearmor` instances :
 
 
+## Installation using helm 
+in this example we are exporting logs to a syslog server which requires the following config 
+
+```
+helm repo add kubearmor https://kubearmor.github.io/charts
+helm repo update kubearmor
+helm upgrade --install sidekick kubearmor/sidekick --set config.syslog.host=syslog-server-service.default.svc.cluster.local --set config.syslog.port=514 --set config.syslog.format=cef --set config.syslog.protocol=udp
+```
+
+
 ## Outputs
 
 `Sidekick` manages a large variety of outputs with different purposes.
@@ -109,24 +119,6 @@ It works as a single endpoint for as many as you want `kubearmor` instances :
 
 ### Other
 - **Policy Report**
-
-## Usage
-
-Run the daemon as any other daemon in your architecture (systemd, k8s daemonset,
-swarm service, ...)
-
-### With docker
-
-```bash
-docker run -d -p 2801:2801 -e SLACK_WEBHOOKURL=XXXX -e DATADOG_APIKEY=XXXX kubearmor/sidekick
-```
-
-### With Helm
-
-to be added 
-
-
-#### with Helm
 
 
 ### Configuration
@@ -309,7 +301,6 @@ aws:
     # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   kinesis:
     # streamname: "" # AWS Kinesis Stream Name, if not empty, Kinesis output is enabled
-    # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
 smtp:
   # hostport: "" # host:port address of SMTP server, if not empty, SMTP output is enabled
@@ -323,7 +314,6 @@ smtp:
   # from: "" # Sender address (mandatory if SMTP output is enabled)
   # to: "" # comma-separated list of Recipident addresses, can't be empty (mandatory if SMTP output is enabled)
   # outputformat: "" # html (default), text
-  # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
 prometheus:
   # extralabels: "" # comma separated list of fields to use as labels additionally to rule, source, priority, tags and custom_fields
@@ -358,7 +348,6 @@ nodered:
   # password: "" # Password if Basic Auth is enabled for 'http in' node in Node-RED
   # customHeaders: # Custom headers to add in POST, useful for Authentication
   #   key: value
-  # minimumpriority: "" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
   # checkcert: true # check if ssl certificate of the output is valid (default: true)
 
 azure:
@@ -370,7 +359,6 @@ azure:
 discord:
   webhookurl: "" # discord WebhookURL (ex: https://discord.com/api/webhooks/xxxxxxxxxx...), if not empty, Discord output is enabled
   # icon: "" # Discord icon (avatar)
-  # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
 gcp:
   credentials: "" # The base64-encoded JSON key file for the GCP service account
@@ -526,7 +514,6 @@ syslog:
   # port: "" # Syslog endpoint port number
   # protocol: "" # Syslog transport protocol. It can be either "tcp" or "udp" (default: tcp)
   # format: "" # Syslog payload format. It can be either "json" or "cef" (default: json)
-  # minimumpriority: "debug" # minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or "" (default)
 
 mqtt:
   broker: "" # Broker address, can start with tcp:// or ssl://, if not empty, MQTT output is enabled
